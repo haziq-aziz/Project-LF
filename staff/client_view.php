@@ -1,10 +1,19 @@
+<?php 
+session_start();
+require '../includes/db_connection.php';
+
+if (!isset($_SESSION['user_id'])) {
+  header('Location: ../../auth/login.php');
+  exit();
+}
+?>
 <!doctype html>
 <html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nabihah Ishak & CO. - Lawyer Dashboard</title>
+  <title>Nabihah Ishak & CO. - List of Clients</title>
   <link rel="stylesheet" href="../assets/css/dashboard.min.css" />
 </head>
 
@@ -26,6 +35,12 @@
       <div class="container-fluid">
         <div class="row">
             <h3 class="text-primary mb-4">List of Clients</h3>
+            <?php if (isset($_SESSION['success'])): ?>
+                <div class="alert alert-success" role="alert">
+                    <?php echo $_SESSION['success']; ?>
+                </div>
+                <?php unset($_SESSION['success']); ?>
+            <?php endif; ?>
             <div class="card">
                 <div class="card-body">
                     <!-- Top Controls -->
@@ -45,7 +60,7 @@
                         </div>
                         <!-- Search Field -->
                         <div>
-                            <input type="text" id="searchField" class="form-control" placeholder="Search...">
+                            <input type="text" id="searchField" class="form-control" placeholder="Search by Name or Case ID">
                         </div>
                     </div>
 
@@ -63,93 +78,26 @@
                           </tr>
                       </thead>
                       <tbody id="clientTableBody">
-                          <tr>
-                              <td>1</td>
-                              <td>John Doe</td>
-                              <td>john.doe@example.com</td>
-                              <td>+60123456789</td>
-                              <td>C001</td>
-                              <td><span class="badge bg-success">Active</span></td>
-                              <td>
-                                  <button class="btn btn-sm btn-primary">Edit</button>
-                                  <button class="btn btn-sm btn-danger">Delete</button>
-                              </td>
-                          </tr>
-                          <tr>
-                              <td>2</td>
-                              <td>Jane Smith</td>
-                              <td>jane.smith@example.com</td>
-                              <td>+60199887766</td>
-                              <td>C002</td>
-                              <td><span class="badge bg-warning">Pending</span></td>
-                              <td>
-                                  <button class="btn btn-sm btn-primary">Edit</button>
-                                  <button class="btn btn-sm btn-danger">Delete</button>
-                              </td>
-                          </tr>
-                          <tr>
-                              <td>3</td>
-                              <td>Ali bin Abu</td>
-                              <td>ali.abu@example.com</td>
-                              <td>+60123456788</td>
-                              <td>C003</td>
-                              <td><span class="badge bg-danger">Closed</span></td>
-                              <td>
-                                  <button class="btn btn-sm btn-primary">Edit</button>
-                                  <button class="btn btn-sm btn-danger">Delete</button>
-                              </td>
-                          </tr>
-                          <tr>
-                              <td>4</td>
-                              <td>Siti Aisyah</td>
-                              <td>siti.aisyah@example.com</td>
-                              <td>+60187654321</td>
-                              <td>C004</td>
-                              <td><span class="badge bg-success">Active</span></td>
-                              <td>
-                                  <button class="btn btn-sm btn-primary">Edit</button>
-                                  <button class="btn btn-sm btn-danger">Delete</button>
-                              </td>
-                          </tr>
-                          <tr>
-                            <td>5</td>
-                            <td>Michael Lee</td>
-                            <td>michael.lee@example.com</td>
-                            <td>+60176543210</td>
-                            <td>C005</td>
-                            <td><span class="badge bg-warning">Pending</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-primary">Edit</button>
-                                <button class="btn btn-sm btn-danger">Delete</button>
-                            </td>
-                          </tr>
-                        </tbody>
-                        </table>
-                        <!-- Pagination -->
-                        <div class="d-flex justify-content-between align-items-center">
-                            <!-- Showing entries text -->
-                            <div id="showingEntriesText">Showing 1 to 10 of 100 entries</div>
+                        <!-- Data will be loaded here dynamically -->
+                      </tbody>
+                    </table>
 
-                            <!-- Page Numbers -->
-                            <ul class="pagination mb-0">
-                                <li class="page-item"><a class="page-link" href="#">1</a></li>
-                                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                                <li class="page-item"><a class="page-link" href="#">4</a></li>
-                           </ul>
+                    <!-- Pagination -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <!-- Showing entries text -->
+                        <div id="showingEntriesText">Showing 1 to 10 entries</div>
 
-                            <!-- Previous & Next Buttons -->
-                            <div>
-                                <button class="btn btn-outline-primary" id="prevPage">Previous</button>
-                                <button class="btn btn-outline-primary" id="nextPage">Next</button>
-                            </div>
+                        <!-- Pagination controls -->
+                        <div>
+                            <button class="btn btn-outline-primary" id="prevPage">Previous</button>
+                            <button class="btn btn-outline-primary" id="nextPage">Next</button>
                         </div>
                     </div>
+                </div>
               </div>
           </div>
       </div>
 
-      
       <!-- Include Footer -->
       <?php include '../includes/footer.php'; ?>
     </div>
@@ -163,6 +111,57 @@
   <script src="../assets/js/app.min.js"></script>
   <script src="../assets/js/dashboard.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+
+  <!-- AJAX Script for Pagination -->
+  <script>
+    $(document).ready(function () {
+        let currentPage = 1;
+        let entriesPerPage = $("#entriesPerPage").val();
+        let searchQuery ="";
+
+        function loadClients() {
+            $.ajax({
+                url: "../includes/staff/fetch_clients.php",
+                type: "GET",
+                data: { entries: entriesPerPage, page: currentPage, search: searchQuery },
+                success: function (data) {
+                    $("#clientTableBody").html(data);
+                    $("#showingEntriesText").text(`Showing ${entriesPerPage} entries`);
+                }
+            });
+        }
+
+        // Initial load
+        loadClients();
+
+        // Change entries per page
+        $("#entriesPerPage").change(function () {
+            entriesPerPage = $(this).val();
+            currentPage = 1;
+            loadClients();
+        });
+
+        $("#searchField").on("keyup", function () {
+            searchQuery = $(this).val();
+            currentPage = 1;
+            loadClients();
+        })
+
+        // Pagination controls
+        $("#prevPage").click(function () {
+            if (currentPage > 1) {
+                currentPage--;
+                loadClients();
+            }
+        });
+
+        $("#nextPage").click(function () {
+            currentPage++;
+            loadClients();
+        });
+    });
+  </script>
+
 </body>
 
 </html>

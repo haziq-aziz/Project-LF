@@ -7,39 +7,55 @@ if (!isset($_SESSION['user_id'])) {
   exit();
 }
 
+$errors = [];
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  $name = $_POST["name"];
-  $gender = $_POST["gender"];
-  $email = trim($_POST["email"]);
-  $mobile = $_POST["mobile"];
-  $address = $_POST["address"];
-  $country = $_POST["country"];
-  $state = $_POST["state"];
-  $city = $_POST["city"];
-  $password = $_POST["password"];
-  $confirmPassword = $_POST["confirmPassword"];
-  $lawyer_id = $_SESSION['user_id'];
+    $name = $_POST["name"];
+    $gender = $_POST["gender"];
+    $email = trim($_POST["email"]);
+    $phone = $_POST["phone"];
+    $address = $_POST["address"];
+    $country = $_POST["country"];
+    $state = $_POST["state"];
+    $city = $_POST["city"];
+    $password = $_POST["password"];
+    $confirmPassword = $_POST["confirmPassword"];
+    $lawyer_id = $_SESSION['user_id'];
 
-  if ($password !== $confirmPassword) {
-    die("Error: Passwords do not match.");
-  }
+    $emailCheck = "SELECT id FROM clients WHERE email = ?";
+    $stmtCheck = $conn->prepare($emailCheck);
+    $stmtCheck->bind_param("s", $email);
+    $stmtCheck->execute();
+    $stmtCheck->store_result();
 
-  $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+    if ($stmtCheck->num_rows > 0) {
+        $errors[] = "Error: Email already exists.";
+    }
+    $stmtCheck->close();
 
-  $sql = "INSERT INTO clients (name, gender, email, password, mobile, address, country, state, city, lawyer_id, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-  
-  $stmt = $conn->prepare($sql);
-  $stmt->bind_param("sssssssssi", $name, $gender, $email, $hashedPassword, $mobile, $address, $country, $state, $city, $lawyer_id);
+    if ($password !== $confirmPassword) {
+        $errors [] = "Error: Passwords do not match.";
+    }
 
-  if ($stmt->execute()) {
-    echo "<script>alert('Client added succesfully!'); window.location.href='client_list.php';</script>";
-  } else {
-    echo "Error: " . $stmt->error;
-  }
+    if(empty($errors)) {
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
-  $stmt->close();
-  $conn->close();
+        $sql = "INSERT INTO clients (name, gender, email, password, phone, address, country, state, city, lawyer_id, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sssssssssi", $name, $gender, $email, $hashedPassword, $phone, $address, $country, $state, $city, $lawyer_id);
+    
+        if ($stmt->execute()) {
+        $_SESSION['success'] = "Client added successfully!";
+        header("Location: client_view.php");
+        exit;
+    } else {
+        $errors[] = "Error: " . $stmt->error;
+    }
+
+        $stmt->close();
+    }
 }
 ?>
 
@@ -73,13 +89,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
               <h3 class="text-primary mb-4">Add Client</h3>
               <div class="card">
                   <div class="card-body">
-                      <form id="addClientForm">
+                      <form id="addClientForm" method="POST" action="<?php echo $_SERVER['PHP_SELF']; ?>">
                           <div class="row">
+                            <div>
+                                <?php if (!empty($errors)): ?>
+    <div class="alert alert-danger">
+        <?php foreach ($errors as $error) echo "<p>$error</p>"; ?>
+    </div>
+<?php endif; ?>
+
+                            </div>
                               <!-- Left Column -->
                               <div class="col-md-6">
                                   <div class="mb-3">
                                       <label for="clientName" class="form-label">Name</label>
-                                      <input type="text" class="form-control" id="clientName" placeholder="Enter full name" required>
+                                      <input type="text" name="name" class="form-control" id="clientName" placeholder="Enter full name" required>
                                   </div>
 
                                   <div class="mb-3">
@@ -92,17 +116,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                                   <div class="mb-3">
                                       <label for="email" class="form-label">Email Address</label>
-                                      <input type="email" class="form-control" id="email" placeholder="Enter email" required>
+                                      <input type="email" name="email" class="form-control" id="email" placeholder="Enter email" required>
                                   </div>
 
                                   <div class="mb-3">
-                                      <label for="mobile" class="form-label">Mobile No</label>
-                                      <input type="tel" class="form-control" id="mobile" placeholder="Enter mobile number" required>
+                                      <label for="phone" class="form-label">Phone no</label>
+                                      <input type="tel" name="phone" class="form-control" id="phone" placeholder="Enter phone number" required>
                                   </div>
 
                                   <div class="mb-3">
                                       <label for="address" class="form-label">Address</label>
-                                      <textarea class="form-control" id="address" placeholder="Enter address" rows="2" required></textarea>
+                                      <textarea name="address" class="form-control" id="address" placeholder="Enter address" rows="2" required></textarea>
                                   </div>
                               </div>
 
@@ -110,7 +134,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                               <div class="col-md-6">
                                   <div class="mb-3">
                                       <label for="country" class="form-label">Country</label>
-                                      <select class="form-control" id="country" required>
+                                      <select name="country" class="form-control" id="country" required>
                                           <option value="">Select Country</option>
                                           <option value="Malaysia">Malaysia</option>
                                           <option value="Singapore">Singapore</option>
@@ -120,7 +144,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                                   <div class="mb-3">
                                       <label for="state" class="form-label">State</label>
-                                      <select class="form-control" id="state" required>
+                                      <select name="state" class="form-control" id="state" required>
                                           <option value="">Select State</option>
                                           <option value="Johor">Johor</option>
                                           <option value="Selangor">Selangor</option>
@@ -130,17 +154,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                                   <div class="mb-3">
                                       <label for="city" class="form-label">City</label>
-                                      <input type="text" class="form-control" id="city" placeholder="Enter city" required>
+                                      <input type="text" name="city" class="form-control" id="city" placeholder="Enter city" required>
                                   </div>
 
                                   <div class="mb-3">
                                       <label for="password" class="form-label">Password</label>
-                                      <input type="password" class="form-control" id="password" placeholder="Enter password" required>
+                                      <input type="password" name="password" class="form-control" id="password" placeholder="Enter password" required>
                                   </div>
 
                                   <div class="mb-3">
                                       <label for="confirmPassword" class="form-label">Repeat Password</label>
-                                      <input type="password" class="form-control" id="confirmPassword" placeholder="Repeat password" required>
+                                      <input type="password" name="confirmPassword" class="form-control" id="confirmPassword" placeholder="Repeat password" required>
                                   </div>
 
                                   <div class="d-grid mt-4">
