@@ -9,6 +9,15 @@ if (!isset($_SESSION['user_id'])) {
 
 $errors = [];
 
+$caseOptions=[];
+$caseQuery = "SELECT id, case_no FROM cases WHERE client_id IS NULL";
+$caseResult = $conn->query($caseQuery);
+if ($caseResult->num_rows > 0) {
+    while ($row = $caseResult->fetch_assoc()) {
+        $caseOptions[] = $row;
+    }
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $name = $_POST["name"];
     $gender = $_POST["gender"];
@@ -47,13 +56,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bind_param("sssssssssi", $name, $gender, $email, $hashedPassword, $phone, $address, $country, $state, $city, $lawyer_id);
     
         if ($stmt->execute()) {
-        $_SESSION['success'] = "Client added successfully!";
-        header("Location: client_view.php");
-        exit;
-    } else {
-        $errors[] = "Error: " . $stmt->error;
-    }
 
+            $client_id = $stmt->insert_id;
+
+            if(!empty($_POST['case_no'])) {
+                $case_id = $_POST['case_no'];
+                $updateCase = "UPDATE cases SET client_id = ? WHERE id = ?";
+                $stmtCase = $conn->prepare($updateCase);
+                $stmtCase->bind_param("ii", $client_id, $case_id);
+                $stmtCase->execute();
+                $stmtCase->close();
+            }
+        
+            $_SESSION['success'] = "Client added successfully!";
+            header("Location: client_view.php");
+            exit;
+        } else {
+            $errors[] = "Error: " . $stmt->error;
+        }
         $stmt->close();
     }
 }
@@ -93,20 +113,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                           <div class="row">
                             <div>
                                 <?php if (!empty($errors)): ?>
-    <div class="alert alert-danger">
-        <?php foreach ($errors as $error) echo "<p>$error</p>"; ?>
-    </div>
-<?php endif; ?>
+                                <div class="alert alert-danger">
+                                    <?php foreach ($errors as $error) echo "<p>$error</p>"; ?>
+                                </div>
+                            <?php endif; ?>
 
                             </div>
                               <!-- Left Column -->
                               <div class="col-md-6">
-                                  <div class="mb-3">
+                                  <div class="mb-4">
                                       <label for="clientName" class="form-label">Name</label>
                                       <input type="text" name="name" class="form-control" id="clientName" placeholder="Enter full name" required>
                                   </div>
 
-                                  <div class="mb-3">
+                                  <div class="mb-4">
                                       <label class="form-label">Gender</label><br>
                                       <input type="radio" name="gender" value="Male" id="genderMale" required>
                                       <label for="genderMale">Male</label>
@@ -114,17 +134,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                       <label for="genderFemale">Female</label>
                                   </div>
 
-                                  <div class="mb-3">
+                                  <div class="mb-4">
                                       <label for="email" class="form-label">Email Address</label>
                                       <input type="email" name="email" class="form-control" id="email" placeholder="Enter email" required>
                                   </div>
 
-                                  <div class="mb-3">
+                                  <div class="mb-4">
                                       <label for="phone" class="form-label">Phone no</label>
                                       <input type="tel" name="phone" class="form-control" id="phone" placeholder="Enter phone number" required>
                                   </div>
 
-                                  <div class="mb-3">
+                                  <div class="mb-4">
                                       <label for="address" class="form-label">Address</label>
                                       <textarea name="address" class="form-control" id="address" placeholder="Enter address" rows="2" required></textarea>
                                   </div>
@@ -132,7 +152,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                               <!-- Right Column -->
                               <div class="col-md-6">
-                                  <div class="mb-3">
+                                  <div class="mb-4">
                                       <label for="country" class="form-label">Country</label>
                                       <select name="country" class="form-control" id="country" required>
                                           <option value="">Select Country</option>
@@ -142,7 +162,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                       </select>
                                   </div>
 
-                                  <div class="mb-3">
+                                  <div class="mb-4">
                                       <label for="state" class="form-label">State</label>
                                       <select name="state" class="form-control" id="state" required>
                                           <option value="">Select State</option>
@@ -152,19 +172,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                       </select>
                                   </div>
 
-                                  <div class="mb-3">
+                                  <div class="mb-4">
                                       <label for="city" class="form-label">City</label>
                                       <input type="text" name="city" class="form-control" id="city" placeholder="Enter city" required>
                                   </div>
 
-                                  <div class="mb-3">
+                                  <div class="mb-4">
                                       <label for="password" class="form-label">Password</label>
                                       <input type="password" name="password" class="form-control" id="password" placeholder="Enter password" required>
                                   </div>
 
-                                  <div class="mb-3">
+                                  <div class="mb-4">
                                       <label for="confirmPassword" class="form-label">Repeat Password</label>
                                       <input type="password" name="confirmPassword" class="form-control" id="confirmPassword" placeholder="Repeat password" required>
+                                  </div>
+
+                                  <div class="mb-4">
+                                    <label for="case_no" class="form-label">Case No.</label>
+                                    <select name="case_no" class="form-select" id="case_no">
+                                        <option selected disabled>Assign Case</option>
+                                        <?php foreach ($caseOptions as $case): ?>
+                                            <option value="<?= $case['id']; ?>"><?= htmlspecialchars($case['case_no']); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
                                   </div>
 
                                   <div class="d-grid mt-4">
