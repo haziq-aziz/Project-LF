@@ -39,7 +39,7 @@ if (!isset($_SESSION['user_id'])) {
                 <div class="card-body p-4 d-flex align-items-center justify-content-between">
                     <div>
                         <h5 class="text-primary mb-2 text-uppercase">Clients</h5>
-                        <h2 class="fw-bold mb-2">0</h2>
+                        <h2 class="fw-bold mb-2 client-count">0</h2>
                         <p class="text-muted">total clients</p>
                     </div>
                     <div>
@@ -247,6 +247,23 @@ if (!isset($_SESSION['user_id'])) {
   <script src="../assets/js/app.min.js"></script>
   <script src="../assets/js/dashboard.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+   
+  <script>
+    $(document).ready(function () {
+    function loadClientCount() {
+        $.ajax({
+            url: "../includes/staff/fetch_client_count.php",
+            type: "GET",
+            dataType: "json",
+            success: function (data) {
+                $(".client-count").text(data.total);
+            }
+        });
+    }
+    loadClientCount();
+    });
+  </script>
+
 </body>
 
 </html>
