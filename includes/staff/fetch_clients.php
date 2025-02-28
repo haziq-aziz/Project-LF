@@ -38,14 +38,15 @@ if ($result->num_rows > 0) {
         $caseNo = !empty($row['case_no']) ? $row['case_no'] : "<span class='text-danger'>Assign Case</span>";
         
         // Assign badge based on case stage
-        if ($row['case_stage'] === "Case Open") {
-            $caseStage = "<span class='badge bg-info'>Case Open</span>";
-        } elseif ($row['case_stage'] === "Case Ongoing") {
-            $caseStage = "<span class='badge bg-warning'>Case Ongoing</span>";
-        } elseif ($row['case_stage'] === "Case Close") {
-            $caseStage = "<span class='badge bg-success'>Case Close</span>";
-        } else {
-            $caseStage = "<span class='badge bg-secondary'>Pending</span>";
+        $caseStage = "<span class='badge bg-secondary'>Pending</span>"; // Default
+        if (!empty($row['case_stage'])) {
+            if ($row['case_stage'] === "Case Open") {
+                $caseStage = "<span class='badge bg-success'>Case Open</span>";
+            } elseif ($row['case_stage'] === "Case Ongoing") {
+                $caseStage = "<span class='badge bg-warning'>Case Ongoing</span>";
+            } elseif ($row['case_stage'] === "Case Close") {
+                $caseStage = "<span class='badge bg-dark'>Case Close</span>";
+            }
         }
 
         $output .= "<tr>
@@ -56,7 +57,7 @@ if ($result->num_rows > 0) {
             <td>{$caseNo}</td>
             <td>{$caseStage}</td>
             <td>
-                <button class='btn btn-sm btn-primary'>Edit</button>
+                <a href='client_edit.php?id=" . $row['id'] . "' class='btn btn-sm btn-primary'>Edit</a>
                 <button class='btn btn-sm btn-danger'>Delete</button>
             </td>
         </tr>";

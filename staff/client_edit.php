@@ -3,19 +3,30 @@ session_start();
 include '../includes/db_connection.php';
 
 if (!isset($_SESSION['user_id'])) {
-  header('Location: ../../auth/login.php');
-  exit();
+    header('Location: ../../auth/login.php');
+    exit();
 }
 
 $errors = [];
+$userData = [];
 
-$caseOptions=[];
-$caseQuery = "SELECT id, case_no FROM cases WHERE client_id IS NULL";
-$caseResult = $conn->query($caseQuery);
-if ($caseResult->num_rows > 0) {
-    while ($row = $caseResult->fetch_assoc()) {
-        $caseOptions[] = $row;
+// Fetch existing user data if editing
+if (isset($_GET['id'])) {
+    $userId = intval($_GET['id']);
+    $userQuery = "SELECT * FROM clients WHERE id = ?";
+    $stmt = $conn->prepare($userQuery);
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $userResult = $stmt->get_result();
+
+    if ($userResult->num_rows > 0) {
+        $userData = $userResult->fetch_assoc();
+    } else {
+        $_SESSION['error'] = "User not found.";
+        header("Location: client_view.php");
+        exit();
     }
+    $stmt->close();
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -29,46 +40,55 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $city = $_POST["city"];
     $password = $_POST["password"];
     $confirmPassword = $_POST["confirmPassword"];
-    $lawyer_id = $_SESSION['user_id'];
+    $userId = $_POST["user_id"]; // Hidden input for user ID
 
-    $emailCheck = "SELECT id FROM clients WHERE email = ?";
-    $stmtCheck = $conn->prepare($emailCheck);
-    $stmtCheck->bind_param("s", $email);
-    $stmtCheck->execute();
-    $stmtCheck->store_result();
+    // Validate email uniqueness (if changed)
+    if ($email !== $userData['email']) {
+        $emailCheck = "SELECT id FROM clients WHERE email = ? AND id != ?";
+        $stmtCheck = $conn->prepare($emailCheck);
+        $stmtCheck->bind_param("si", $email, $userId);
+        $stmtCheck->execute();
+        $stmtCheck->store_result();
 
-    if ($stmtCheck->num_rows > 0) {
-        $errors[] = "Error: Email already exists.";
+        if ($stmtCheck->num_rows > 0) {
+            $errors[] = "Error: Email already exists.";
+        }
+        $stmtCheck->close();
     }
-    $stmtCheck->close();
 
-    if ($password !== $confirmPassword) {
-        $errors [] = "Error: Passwords do not match.";
+    // Validate password match
+    if (!empty($password) && $password !== $confirmPassword) {
+        $errors[] = "Error: Passwords do not match.";
     }
 
-    if(empty($errors)) {
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-        $sql = "INSERT INTO clients (name, gender, email, password, phone, address, country, state, city, lawyer_id, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+    if (empty($errors)) {
+        // Update user data
+        $sql = "UPDATE clients SET 
+                name = ?, 
+                gender = ?, 
+                email = ?, 
+                phone = ?, 
+                address = ?, 
+                country = ?, 
+                state = ?, 
+                city = ? 
+                WHERE id = ?";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssssssssi", $name, $gender, $email, $hashedPassword, $phone, $address, $country, $state, $city, $lawyer_id);
-    
+        $stmt->bind_param("ssssssssi", $name, $gender, $email, $phone, $address, $country, $state, $city, $userId);
+
         if ($stmt->execute()) {
-
-            $client_id = $stmt->insert_id;
-
-            if(!empty($_POST['case_no'])) {
-                $case_id = $_POST['case_no'];
-                $updateCase = "UPDATE cases SET client_id = ? WHERE id = ?";
-                $stmtCase = $conn->prepare($updateCase);
-                $stmtCase->bind_param("ii", $client_id, $case_id);
-                $stmtCase->execute();
-                $stmtCase->close();
+            // Update password if provided
+            if (!empty($password)) {
+                $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+                $updatePassword = "UPDATE clients SET password = ? WHERE id = ?";
+                $stmtPassword = $conn->prepare($updatePassword);
+                $stmtPassword->bind_param("si", $hashedPassword, $userId);
+                $stmtPassword->execute();
+                $stmtPassword->close();
             }
-        
-            $_SESSION['success'] = "Client added successfully!";
+
+            $_SESSION['success'] = "User updated successfully!";
             header("Location: client_view.php");
             exit;
         } else {
@@ -85,7 +105,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nabihah Ishak & CO. - Add Client</title>
+  <title>Nabihah Ishak & CO. - Edit User</title>
   <link rel="stylesheet" href="../assets/css/dashboard.min.css" />
 </head>
 
@@ -106,10 +126,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       <!-- Main Content -->
       <div class="container-fluid">
           <div class="row">
-              <h3 class="text-primary mb-4">Add Client</h3>
+              <h3 class="text-primary mb-4">Edit User</h3>
               <div class="card">
                   <div class="card-body">
-                      <form id="addClientForm" method="POST" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+                      <form id="editUserForm" method="POST" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+                          <input type="hidden" name="user_id" value="<?= $userData['id'] ?? ''; ?>">
                           <div class="row">
                             <div>
                                 <?php if (!empty($errors)): ?>
@@ -123,30 +144,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                               <div class="col-md-6">
                                   <div class="mb-4">
                                       <label for="clientName" class="form-label">Name</label>
-                                      <input type="text" name="name" class="form-control" id="clientName" placeholder="Enter full name" required>
+                                      <input type="text" name="name" class="form-control" id="clientName" value="<?= htmlspecialchars($userData['name'] ?? ''); ?>" required>
                                   </div>
 
                                   <div class="mb-4">
                                       <label class="form-label">Gender</label><br>
-                                      <input type="radio" name="gender" value="Male" id="genderMale" required>
+                                      <input type="radio" name="gender" value="Male" id="genderMale" <?= ($userData['gender'] ?? '') === 'Male' ? 'checked' : ''; ?> required>
                                       <label for="genderMale">Male</label>
-                                      <input type="radio" name="gender" value="Female" id="genderFemale" required>
+                                      <input type="radio" name="gender" value="Female" id="genderFemale" <?= ($userData['gender'] ?? '') === 'Female' ? 'checked' : ''; ?> required>
                                       <label for="genderFemale">Female</label>
                                   </div>
 
                                   <div class="mb-4">
                                       <label for="email" class="form-label">Email Address</label>
-                                      <input type="email" name="email" class="form-control" id="email" placeholder="Enter email" required>
+                                      <input type="email" name="email" class="form-control" id="email" value="<?= htmlspecialchars($userData['email'] ?? ''); ?>" required>
                                   </div>
 
                                   <div class="mb-4">
                                       <label for="phone" class="form-label">Phone no</label>
-                                      <input type="tel" name="phone" class="form-control" id="phone" placeholder="Enter phone number" required>
+                                      <input type="tel" name="phone" class="form-control" id="phone" value="<?= htmlspecialchars($userData['phone'] ?? ''); ?>" required>
                                   </div>
 
                                   <div class="mb-4">
                                       <label for="address" class="form-label">Address</label>
-                                      <textarea name="address" class="form-control" id="address" placeholder="Enter address" rows="2" required></textarea>
+                                      <textarea name="address" class="form-control" id="address" rows="2" required><?= htmlspecialchars($userData['address'] ?? ''); ?></textarea>
                                   </div>
                               </div>
 
@@ -156,9 +177,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                       <label for="country" class="form-label">Country</label>
                                       <select name="country" class="form-control" id="country" required>
                                           <option value="">Select Country</option>
-                                          <option value="Malaysia">Malaysia</option>
-                                          <option value="Singapore">Singapore</option>
-                                          <option value="Indonesia">Indonesia</option>
+                                          <option value="Malaysia" <?= ($userData['country'] ?? '') === 'Malaysia' ? 'selected' : ''; ?>>Malaysia</option>
+                                          <option value="Singapore" <?= ($userData['country'] ?? '') === 'Singapore' ? 'selected' : ''; ?>>Singapore</option>
+                                          <option value="Indonesia" <?= ($userData['country'] ?? '') === 'Indonesia' ? 'selected' : ''; ?>>Indonesia</option>
                                       </select>
                                   </div>
 
@@ -166,39 +187,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                       <label for="state" class="form-label">State</label>
                                       <select name="state" class="form-control" id="state" required>
                                           <option value="">Select State</option>
-                                          <option value="Johor">Johor</option>
-                                          <option value="Selangor">Selangor</option>
-                                          <option value="Sabah">Sabah</option>
+                                          <option value="Johor" <?= ($userData['state'] ?? '') === 'Johor' ? 'selected' : ''; ?>>Johor</option>
+                                          <option value="Selangor" <?= ($userData['state'] ?? '') === 'Selangor' ? 'selected' : ''; ?>>Selangor</option>
+                                          <option value="Sabah" <?= ($userData['state'] ?? '') === 'Sabah' ? 'selected' : ''; ?>>Sabah</option>
                                       </select>
                                   </div>
 
                                   <div class="mb-4">
                                       <label for="city" class="form-label">City</label>
-                                      <input type="text" name="city" class="form-control" id="city" placeholder="Enter city" required>
+                                      <input type="text" name="city" class="form-control" id="city" value="<?= htmlspecialchars($userData['city'] ?? ''); ?>" required>
                                   </div>
 
                                   <div class="mb-4">
                                       <label for="password" class="form-label">Password</label>
-                                      <input type="password" name="password" class="form-control" id="password" placeholder="Enter password" required>
+                                      <input type="password" name="password" class="form-control" id="password" placeholder="Leave blank to keep current password">
                                   </div>
 
                                   <div class="mb-4">
                                       <label for="confirmPassword" class="form-label">Repeat Password</label>
-                                      <input type="password" name="confirmPassword" class="form-control" id="confirmPassword" placeholder="Repeat password" required>
-                                  </div>
-
-                                  <div class="mb-4">
-                                    <label for="case_no" class="form-label">Case No.</label>
-                                    <select name="case_no" class="form-select" id="case_no">
-                                        <option selected disabled>Assign Case</option>
-                                        <?php foreach ($caseOptions as $case): ?>
-                                            <option value="<?= $case['id']; ?>"><?= htmlspecialchars($case['case_no']); ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                      <input type="password" name="confirmPassword" class="form-control" id="confirmPassword" placeholder="Repeat password">
                                   </div>
 
                                   <div class="d-grid mt-4">
-                                      <button type="submit" class="btn btn-primary">Add Client</button>
+                                      <button type="submit" class="btn btn-primary m-1">Update User</button>
+                                  </div>
+                                   <div class="d-grid mt-2">
+                                      <a href="client_view.php" class="btn btn-danger m-1">Cancel</a>
                                   </div>
                               </div>
                           </div>

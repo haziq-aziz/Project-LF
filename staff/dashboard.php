@@ -99,7 +99,7 @@ if (!isset($_SESSION['user_id'])) {
                             <p class="mb-2">Manage your cases</p>
                         </div>
                         <div>
-                            <button class="btn btn-primary">View All Cases</button>
+                            <a href="case_view.php" class="btn btn-primary">View All Cases</a>
                         </div>
                     </div>
                     <div class="row">

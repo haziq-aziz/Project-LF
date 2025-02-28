@@ -1,0 +1,25 @@
+.timeline {
+    list-style: none;
+    padding: 0;
+    position: relative;
+}
+
+.timeline li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 15px;
+    border-left: 3px solid #007bff; /* Blue timeline line */
+}
+
+.timeline-date {
+    font-size: 14px;
+    font-weight: bold;
+    color: #6c757d;
+    display: block;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+}

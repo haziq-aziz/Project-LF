@@ -13,6 +13,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         return htmlspecialchars(trim($data), ENT_QUOTES, 'UTF-8');
     }
 
+    $caseId = sanitize_input($_POST["case_id"] ?? 0);
     $respondentName = sanitize_input($_POST["respondentName"] ?? '');
     $respondentAdvocate = sanitize_input($_POST["respondentAdvocate"] ?? '');
     $role = sanitize_input($_POST["role"] ?? '');
@@ -38,25 +39,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Check if required fields are empty
     if (empty($caseNo) || empty($filingNo) || empty($caseType) || empty($lawyer_id)) {
         $_SESSION['error'] = "Required fields are missing!";
-        header("Location: ../../staff/case_view.php");
+        header("Location: ../../staff/case_edit.php?id=$caseId");
         exit();
     }
 
     // Prepare SQL statement
-    $query = "INSERT INTO cases 
-        (respondent_name, respondent_advocate, role, case_no, filing_no, register_no, case_no_report, case_type, filing_date, register_date, description, case_stage, file_category, first_hearing_date, case_priority, court_detail, court_type, court, judge_name, remarks, lawyer_id, created_at) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_DATE)";
+    $query = "UPDATE cases SET 
+        respondent_name = ?, 
+        respondent_advocate = ?, 
+        role = ?, 
+        case_no = ?, 
+        filing_no = ?, 
+        register_no = ?, 
+        case_no_report = ?, 
+        case_type = ?, 
+        filing_date = ?, 
+        register_date = ?, 
+        description = ?, 
+        case_stage = ?, 
+        file_category = ?, 
+        first_hearing_date = ?, 
+        case_priority = ?, 
+        court_detail = ?, 
+        court_type = ?, 
+        court = ?, 
+        judge_name = ?, 
+        remarks = ?, 
+        lawyer_id = ? 
+        WHERE id = ?";
 
     if ($stmt = mysqli_prepare($conn, $query)) {
-        mysqli_stmt_bind_param($stmt, "ssssssssssssssssssssi", 
+        mysqli_stmt_bind_param($stmt, "ssssssssssssssssssssii", 
             $respondentName, $respondentAdvocate, $role, $caseNo, $filingNo, $registerNo, 
             $caseNoReport, $caseType, $filingDate, $registerDate, $description, $caseStage, 
             $fileCategory, $firstHearingDate, $casePriority, $courtDetail, $courtType, 
-            $court, $judgeName, $remarks, $lawyer_id
+            $court, $judgeName, $remarks, $lawyer_id, $caseId
         );
 
+
         if (mysqli_stmt_execute($stmt)) {
-            $_SESSION['success'] = "Case added successfully!";
+            $_SESSION['success'] = "Case updated successfully!";
         } else {
             $_SESSION['error'] = "Database error: " . mysqli_error($conn);
         }
@@ -66,11 +88,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     mysqli_close($conn);
-    header("Location: ../../staff/case_add.php");
+    header("Location: ../../staff/case_detail.php?case_id=$caseId");
     exit();
 } else {
-    header("Location: ../../staff/case_add.php");
+    header("Location: ../../staff/case_view.php");
     exit();
 }
-
 ?>
