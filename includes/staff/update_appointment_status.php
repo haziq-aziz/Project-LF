@@ -16,43 +16,52 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
+// Check if the required parameters are provided
+if (!isset($_POST['appointment_id']) || !isset($_POST['status'])) {
+    echo json_encode(['success' => false, 'message' => 'Missing required parameters']);
+    exit();
+}
+
 // Get and validate parameters
-$appointment_id = isset($_POST['id']) ? intval($_POST['id']) : 0;
-$status = isset($_POST['status']) ? $_POST['status'] : '';
+$appointment_id = intval($_POST['appointment_id']);
+$status = $_POST['status'];
+$user_id = $_SESSION['user_id'];
 
 if ($appointment_id <= 0) {
     echo json_encode(['success' => false, 'message' => 'Invalid appointment ID']);
     exit();
 }
 
-if (!in_array($status, ['Completed', 'Cancelled', 'Scheduled', 'Rescheduled'])) {
+// Validate status
+$allowed_statuses = ['Scheduled', 'Completed', 'Cancelled', 'Rescheduled'];
+if (!in_array($status, $allowed_statuses)) {
     echo json_encode(['success' => false, 'message' => 'Invalid status']);
     exit();
 }
 
-// Check if the user has permission to update this appointment
-$check_query = "SELECT id FROM appointments WHERE id = ? AND (staff_id = ? OR created_by = ?)";
-$stmt = $conn->prepare($check_query);
-$stmt->bind_param("iii", $appointment_id, $_SESSION['user_id'], $_SESSION['user_id']);
-$stmt->execute();
-$result = $stmt->get_result();
+// Verify that the appointment belongs to the current user
+$check_query = "SELECT id FROM appointments WHERE id = ? AND staff_id = ?";
+$check_stmt = $conn->prepare($check_query);
+$check_stmt->bind_param("ii", $appointment_id, $user_id);
+$check_stmt->execute();
+$result = $check_stmt->get_result();
 
 if ($result->num_rows === 0) {
-    echo json_encode(['success' => false, 'message' => 'Appointment not found or you do not have permission to update it']);
+    echo json_encode(['success' => false, 'message' => 'Appointment not found or access denied']);
     exit();
 }
 
 // Update the appointment status
 $update_query = "UPDATE appointments SET status = ? WHERE id = ?";
-$stmt = $conn->prepare($update_query);
-$stmt->bind_param("si", $status, $appointment_id);
+$update_stmt = $conn->prepare($update_query);
+$update_stmt->bind_param("si", $status, $appointment_id);
 
-if ($stmt->execute()) {
+if ($update_stmt->execute()) {
     echo json_encode(['success' => true, 'message' => 'Appointment status updated successfully']);
 } else {
-    echo json_encode(['success' => false, 'message' => 'Failed to update appointment status: ' . $conn->error]);
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);
 }
 
-$stmt->close();
+$update_stmt->close();
 $conn->close();
 ?>

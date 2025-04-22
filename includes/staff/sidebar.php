@@ -135,14 +135,6 @@ if (!isset($conn)) {
             <span class="hide-menu">Payments & Invoices</span>
           </a>
         </li>
-        <li class="sidebar-item">
-          <a class="sidebar-link" href="system_settings.php" aria-expanded="false">
-            <span>
-              <iconify-icon icon="solar:settings-bold-duotone" class="fs-6"></iconify-icon>
-            </span>
-            <span class="hide-menu">System Settings</span>
-          </a>
-        </li>
       </ul>
       <?php endif; ?>
     </nav>
