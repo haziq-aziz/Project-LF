@@ -87,6 +87,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nabihah Ishak & CO. - Add Client</title>
   <link rel="stylesheet" href="../assets/css/dashboard.min.css" />
+  <link rel="stylesheet" href="../assets/css/others.css" />
 </head>
 
 <body>
@@ -185,16 +186,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                   <div class="mb-4">
                                       <label for="confirmPassword" class="form-label">Repeat Password</label>
                                       <input type="password" name="confirmPassword" class="form-control" id="confirmPassword" placeholder="Repeat password" required>
-                                  </div>
-
-                                  <div class="mb-4">
-                                    <label for="case_no" class="form-label">Case No.</label>
-                                    <select name="case_no" class="form-select" id="case_no">
-                                        <option selected disabled>Assign Case</option>
-                                        <?php foreach ($caseOptions as $case): ?>
-                                            <option value="<?= $case['id']; ?>"><?= htmlspecialchars($case['case_no']); ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
                                   </div>
 
                                   <div class="d-grid mt-4">

@@ -22,6 +22,7 @@ $lawyerResult = $conn->query($lawyerQuery);
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nabihah Ishak & CO. - Add a case</title>
   <link rel="stylesheet" href="../assets/css/dashboard.min.css" />
+  <link rel="stylesheet" href="../assets/css/others.css" />
 </head>
 
 <body>
@@ -42,36 +43,74 @@ $lawyerResult = $conn->query($lawyerQuery);
       <div class="container-fluid">
         <div class="row">
             <h3 class="text-primary mb-4 text-uppercase">Add Case</h3>
+            
+            <!-- Success Message -->
+            <?php if (isset($_SESSION['success'])): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <?= htmlspecialchars($_SESSION['success']) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <?php unset($_SESSION['success']); ?>
+            <?php endif; ?>
+            
+            <!-- Error Message -->
+            <?php if (isset($_SESSION['error'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <?= htmlspecialchars($_SESSION['error']) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <?php unset($_SESSION['error']); ?>
+            <?php endif; ?>
+            
             <form action="../includes/staff/add_case_process.php" method="POST">
                 <!-- Client Details -->
                 <div class="card">
                     <div class="card-body">
                         <legend>Client Details</legend>
                         <div class="row">
-                            <!-- Left Column -->
+                            <!-- Left Column - Client Selection -->
                             <div class="col-md-6">
                                 <div class="mb-4">
-                                    <label for="clientName" class="form-label text-primary">Respondent's Name</label>
-                                    <input type="text" name="respondentName" class="form-control" id="clientName" placeholder="Enter full name" required>
+                                    <label for="client_id" class="form-label text-primary">Select Client</label>
+                                    <select name="client_id" class="form-select" id="client_id" required>
+                                        <option value="" selected disabled>Select Existing Client</option>
+                                        <?php while ($client = $clientResult->fetch_assoc()): ?>
+                                        <option value="<?= $client['id'] ?>"><?= htmlspecialchars($client['name']) ?></option>
+                                        <?php endwhile; ?>
+                                    </select>
                                 </div>
+                                
                                 <div class="mb-4">
+                                    <label class="form-label text-primary">Client's Role in Case</label>
                                     <div class="d-flex gap-3">
                                         <div class="form-check">
-                                            <input type="radio" class="form-check-input" name="role" id="petitioner" value="Petitioner" required>
-                                            <label class="form-check-label" for="petitioner">Petitioner</label>
+                                            <input type="radio" class="form-check-input" name="client_role" id="client_petitioner" value="Petitioner" required>
+                                            <label class="form-check-label" for="client_petitioner">Petitioner</label>
                                         </div>
                                         <div class="form-check">
-                                            <input type="radio" class="form-check-input" name="role" id="respondent" value="Respondent" required>
-                                            <label class="form-check-label" for="respondent">Respondent</label>
+                                            <input type="radio" class="form-check-input" name="client_role" id="client_respondent" value="Respondent" required>
+                                            <label class="form-check-label" for="client_respondent">Respondent</label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <!-- Right Column -->
-                            <div class="col-md-6">
+                            
+                            <!-- Right Column - Dynamic fields -->
+                            <div class="col-md-6" id="opposingPartyFields">
+                                <!-- These fields will change based on the client's role -->
+                                <div class="mb-4" id="respondent_field" style="display:none;">
+                                    <label for="respondentName" class="form-label text-primary">Respondent's Name</label>
+                                    <input type="text" name="respondentName" class="form-control" id="respondentName" placeholder="Enter Respondent's Name">
+                                </div>
+                                
+                                <div class="mb-4" id="petitioner_field" style="display:none;">
+                                    <label for="petitionerName" class="form-label text-primary">Petitioner's Name</label>
+                                    <input type="text" name="petitionerName" class="form-control" id="petitionerName" placeholder="Enter Petitioner's Name">
+                                </div>
+                                
                                 <div class="mb-4">
-                                    <label for="advocateName" class="form-label text-primary">Respondent's Advocate</label>
-                                    <input type="text" name="respondentAdvocate" class="form-control" id="advocateName" placeholder="Enter Respondent's Advocate" required>
+                                    <label for="advocateName" class="form-label text-primary">Opposing Party's Advocate</label>
+                                    <input type="text" name="advocateName" class="form-control" id="advocateName" placeholder="Enter Advocate's Name" required>
                                 </div>
                             </div>
                         </div>
@@ -252,6 +291,31 @@ $lawyerResult = $conn->query($lawyerQuery);
     <script src="../assets/js/app.min.js"></script>
     <script src="../assets/js/dashboard.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+    
+    <script>
+    // Dynamic form fields based on client role
+    $(document).ready(function() {
+        // When a radio button is clicked
+        $('input[name="client_role"]').change(function() {
+            var selectedRole = $(this).val();
+            
+            // Hide both fields first
+            $('#respondent_field').hide();
+            $('#petitioner_field').hide();
+            
+            // Show relevant field based on selection
+            if (selectedRole === 'Petitioner') {
+                $('#respondent_field').show();
+                $('#respondentName').prop('required', true);
+                $('#petitionerName').prop('required', false);
+            } else if (selectedRole === 'Respondent') {
+                $('#petitioner_field').show();
+                $('#petitionerName').prop('required', true);
+                $('#respondentName').prop('required', false);
+            }
+        });
+    });
+    </script>
 </body>
 
 </html>

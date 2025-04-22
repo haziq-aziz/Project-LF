@@ -15,6 +15,7 @@ if (!isset($_SESSION['user_id'])) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nabihah Ishak & CO. - Case Management</title>
   <link rel="stylesheet" href="../assets/css/dashboard.min.css" />
+  <link rel="stylesheet" href="../assets/css/others.css" />
 </head>
 
 <body>

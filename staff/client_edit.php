@@ -107,6 +107,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nabihah Ishak & CO. - Edit User</title>
   <link rel="stylesheet" href="../assets/css/dashboard.min.css" />
+  <link rel="stylesheet" href="../assets/css/others.css" />
 </head>
 
 <body>

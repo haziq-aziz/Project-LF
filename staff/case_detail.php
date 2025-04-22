@@ -16,7 +16,7 @@ if (!isset($_SESSION['user_id'])) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nabihah Ishak & CO. - Lawyer Dashboard</title>
+  <title>Nabihah Ishak & CO. - Case Details</title>
   <link rel="stylesheet" href="../assets/css/dashboard.min.css" />
   <link rel="stylesheet" href="../assets/css/others.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -40,7 +40,7 @@ if (!isset($_SESSION['user_id'])) {
       <div class="container-fluid">
         <div class="row">
           <div class="col-lg-4">
-            <a href="case_edit.php?id=<?= $case['id']; ?>" class="btn btn-sm btn-primary p-2 mb-2">
+            <a href="edit_case.php?id=<?= $case['id']; ?>" class="btn btn-sm btn-primary p-2 mb-2">
               <i class="fa fa-edit me-2"></i>
               Edit Case
             </a>
@@ -53,6 +53,13 @@ if (!isset($_SESSION['user_id'])) {
                   </div>
                   <?php unset($_SESSION['success']); ?>
               <?php endif; ?>
+              
+              <?php if (isset($_SESSION['error'])): ?>
+                  <div class="alert alert-danger" role="alert">
+                      <?php echo $_SESSION['error']; ?>
+                  </div>
+                  <?php unset($_SESSION['error']); ?>
+              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -62,8 +69,8 @@ if (!isset($_SESSION['user_id'])) {
             <div class="position-relative">
                 <img src="../assets/images/staff_dashboard/img_1.jpg" class="card-img-top" style="height: 150px; object-fit: cover;">
               <span class="badge text-bg-light text-dark fs-2 lh-sm mb-9 me-9 py-1 px-2 fw-semibold position-absolute bottom-0 end-0">
-                Personal Injury
-            </span>
+                <?= htmlspecialchars($case['case_type']) ?>
+              </span>
             </div>
             <div class="card-body p-4">
                 <!-- Case Details -->
@@ -73,26 +80,43 @@ if (!isset($_SESSION['user_id'])) {
                         <div class="col-md-6">
                             <strong>Client's Name:</strong>
                             <p class="mb-2"><?= htmlspecialchars($case['client_name']) ?></p>
+                            
+                            <strong>Client's Role:</strong>
+                            <p class="mb-2"><?= htmlspecialchars($case['client_role'] ?? 'Not specified') ?></p>
+                            
                             <strong>Case No:</strong>
                             <p class="mb-2"><?= htmlspecialchars($case['case_no']) ?></p>
-                            <strong>Respondent Name:</strong>
-                            <p class="mb-2"><?= htmlspecialchars($case['respondent_name']) ?></p>
-                            <strong>Respondent Advocate:</strong> 
-                            <p class="mb-2"><?= htmlspecialchars($case['respondent_advocate']) ?></p>
+                            
+                            <?php if ($case['client_role'] === 'Petitioner'): ?>
+                                <strong>Respondent Name:</strong>
+                                <p class="mb-2"><?= htmlspecialchars($case['respondent_name']) ?></p>
+                            <?php else: ?>
+                                <strong>Petitioner Name:</strong>
+                                <p class="mb-2"><?= htmlspecialchars($case['petitioner_name']) ?></p>
+                            <?php endif; ?>
+                            
+                            <strong>Opposing Party's Advocate:</strong> 
+                            <p class="mb-2"><?= htmlspecialchars($case['advocate_name'] ?? 'Not specified') ?></p>
+                            
                             <strong>Assigned Lawyer:</strong> 
                             <p class="mb-2"><?= htmlspecialchars($case['lawyer_name']) ?></p>
-                            <strong>Filing No:</strong> 
-                            <p class="mb-2"><?= htmlspecialchars($case['filing_no']) ?></p>
                         </div>
                         <div class="col-md-6">
+                            <strong>Filing No:</strong> 
+                            <p class="mb-2"><?= htmlspecialchars($case['filing_no']) ?></p>
+                            
                             <strong>Register No:</strong>
                             <p class="mb-2"><?= htmlspecialchars($case['register_no']) ?></p>
+                            
                             <strong>Case No Report:</strong>
                             <p class="mb-2"><?= htmlspecialchars($case['case_no_report']) ?></p>
+                            
                             <strong>Filing Date:</strong>
                             <p class="mb-2"><?= htmlspecialchars($case['filing_date']) ?></p>
+                            
                             <strong>Register Date:</strong>
                             <p class="mb-2"><?= htmlspecialchars($case['register_date']) ?></p>
+                            
                             <strong>Case Priority:</strong> 
                             <p class="mb-2"><span class="badge 
                             <?php if ($case['case_priority'] == 'High') {
@@ -103,6 +127,7 @@ if (!isset($_SESSION['user_id'])) {
                                 echo 'bg-success';
                             } ?>">
                             <?= htmlspecialchars($case['case_priority']) ?></span></p>
+                            
                             <strong>Date Created:</strong>
                             <p class="mb-2"> <?= htmlspecialchars($case['created_at']) ?></p>
                         </div>
@@ -121,6 +146,7 @@ if (!isset($_SESSION['user_id'])) {
     <div class="card-body p-4">
         <!-- Client Details -->
         <h1 class="fs-5 text-primary fw-semibold mb-3">Client Details</h1>
+        <?php if (!empty($case['client_name'])): ?>
         <div class="row">
             <div class="col-md-6">
                 <strong>Client's Name:</strong> 
@@ -147,6 +173,11 @@ if (!isset($_SESSION['user_id'])) {
             </div>
           </div>
         </div>
+        <?php else: ?>
+        <div class="alert alert-info">
+            <i class="fa fa-info-circle me-2"></i> No client associated with this case
+        </div>
+        <?php endif; ?>
 
         <hr>
 
@@ -161,6 +192,12 @@ if (!isset($_SESSION['user_id'])) {
             <div class="col-md-6">
                 <p><strong>Judge Name:</strong> <?= htmlspecialchars($case['judge_name']) ?></p>
                 <p><strong>Hearing Date:</strong> <?= htmlspecialchars($case['first_hearing_date']) ?></p>
+                <p><strong>Case Stage:</strong> 
+                   <span class="badge <?= ($case['case_stage'] == 'Case Open') ? 'bg-info' : 
+                                        (($case['case_stage'] == 'Case Ongoing') ? 'bg-warning' : 'bg-success') ?>">
+                      <?= htmlspecialchars($case['case_stage']) ?>
+                   </span>
+                </p>
             </div>
         </div>
         <div class="row">
@@ -178,7 +215,12 @@ if (!isset($_SESSION['user_id'])) {
         <div class="col-lg-8">
           <div class="card">
             <div class="card-body">
-              <h5 class="card-title">List of Files</h5>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title mb-0">List of Files</h5>
+                <a href="case_add_file.php?case_id=<?= $case['id']; ?>" class="btn btn-primary btn-sm">
+                  <i class="fa fa-plus me-1"></i> Add Files
+                </a>
+              </div>
               <div class="table-responsive">
                 <table class="table text-nowrap align-middle mb-0">
                   <thead>
@@ -192,20 +234,56 @@ if (!isset($_SESSION['user_id'])) {
                     </tr>
                   </thead>
                   <tbody class="table-group-divider">
+                    <?php
+                    // Fetch files for this case
+                    $files_query = "SELECT cf.*, c.case_no, c.case_type 
+                                   FROM case_files cf
+                                   JOIN cases c ON cf.case_id = c.id
+                                   WHERE cf.case_id = ?
+                                   ORDER BY cf.created_at DESC";
+                    $stmt = $conn->prepare($files_query);
+                    $stmt->bind_param("i", $case['id']);
+                    $stmt->execute();
+                    $files_result = $stmt->get_result();
+                    
+                    if ($files_result->num_rows > 0) {
+                        while ($file = $files_result->fetch_assoc()) {
+                    ?>
                     <tr>
                       <td>
-                        <a href="javascript:void(0)" class="link-primary text-dark fw-medium d-block">Nama File Apa.pdf</a>
+                        <a href="../uploads/case_files/<?= htmlspecialchars($file['file_path']) ?>" target="_blank" 
+                           class="link-primary text-dark fw-medium d-block">
+                           <?= htmlspecialchars($file['file_name']) ?>
+                        </a>
                       </td>
-                      <td class="text-center fw-medium">C001</td>
-                      <td class="text-center fw-medium">Blue</td>
-                      <td class="text-center fw-medium">Personal Injury</td>
-                      <td class="text-center fw-medium">17-03-2025</td>
+                      <td class="text-center fw-medium"><?= htmlspecialchars($file['case_no']) ?></td>
+                      <td class="text-center fw-medium"><?= htmlspecialchars($file['file_category']) ?></td>
+                      <td class="text-center fw-medium"><?= htmlspecialchars($file['case_type']) ?></td>
+                      <td class="text-center fw-medium"><?= date('d-m-Y', strtotime($file['created_at'])) ?></td>
                       <td class="text-center fw-medium">
-                        <a href="">View</a> |
-                        <a href="">Edit</a> |
-                        <a href="">Delete</a>
+                        <a href="../uploads/case_files/<?= htmlspecialchars($file['file_path']) ?>" target="_blank" class="btn btn-sm btn-info">
+                          <i class="fa fa-eye"></i> View
+                        </a>
+                        <a href="edit_case_file.php?id=<?= $file['id'] ?>&case_id=<?= $case['id'] ?>" class="btn btn-sm btn-warning">
+                          <i class="fa fa-edit"></i> Edit
+                        </a>
+                        <a href="../includes/staff/delete_case_file.php?id=<?= $file['id'] ?>&case_id=<?= $case['id'] ?>" 
+                           onclick="return confirm('Are you sure you want to delete this file?')" 
+                           class="btn btn-sm btn-danger">
+                          <i class="fa fa-trash"></i> Delete
+                        </a>
                       </td>
                     </tr>
+                    <?php
+                        }
+                    } else {
+                    ?>
+                    <tr>
+                      <td colspan="6" class="text-center py-3">
+                        <i class="fa fa-folder-open text-muted me-2"></i> No files uploaded yet
+                      </td>
+                    </tr>
+                    <?php } ?>
                   </tbody>
                 </table>
               </div>
@@ -213,51 +291,50 @@ if (!isset($_SESSION['user_id'])) {
           </div>
         </div>
         <div class="col-lg-4">
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title">Case Progress</h5>
-            <ul class="timeline">
-                <li>
-                    <span class="timeline-date">05 Mar 2025</span>
-                    <div class="timeline-content">
-                        <strong>Case Filed</strong>
-                        <p>Case officially filed in court.</p>
-                    </div>
-                </li>
-                <li>
-                    <span class="timeline-date">10 Mar 2025</span>
-                    <div class="timeline-content">
-                        <strong>Case Registered</strong>
-                        <p>Case registered under case no C001.</p>
-                    </div>
-                </li>
-                <li>
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Case Progress</h5>
+                <ul class="timeline">
+                  <li>
+                      <span class="timeline-date">05 Mar 2025</span>
+                      <div class="timeline-content">
+                          <strong>Case Filed</strong>
+                          <p>Case officially filed in court.</p>
+                      </div>
+                  </li>
+                  <li>
+                      <span class="timeline-date">10 Mar 2025</span>
+                      <div class="timeline-content">
+                          <strong>Case Registered</strong>
+                          <p>Case registered under case no C001.</p>
+                      </div>
+                  </li>
+                  <li>
                     <span class="timeline-date">12 Mar 2025</span>
                     <div class="timeline-content">
                         <strong>Preliminary Hearing</strong>
                         <p>Initial hearing with the judge.</p>
                     </div>
-                </li>
-                <li>
-                    <span class="timeline-date">15 May 2025</span>
-                    <div class="timeline-content">
-                        <strong>Main Hearing</strong>
-                        <p>Full hearing in progress.</p>
-                    </div>
-                </li>
-                <li>
-                    <span class="timeline-date">Pending</span>
-                    <div class="timeline-content">
-                        <strong>Final Verdict</strong>
-                        <p>Awaiting judge’s final decision.</p>
-                    </div>
-                </li>
-            </ul>
+                    </li>
+                    <li>
+                        <span class="timeline-date">15 May 2025</span>
+                        <div class="timeline-content">
+                            <strong>Main Hearing</strong>
+                            <p>Full hearing in progress.</p>
+                        </div>
+                    </li>
+                    <li>
+                      <span class="timeline-date">Pending</span>
+                      <div class="timeline-content">
+                          <strong>Final Verdict</strong>
+                          <p>Awaiting judge's final decision.</p>
+                      </div>
+                  </li>
+                </ul>
+            </div>
         </div>
     </div>
-</div>
-
-      </div>
+  </div>
       
       <!-- Include Footer -->
       <?php include '../includes/footer.php'; ?>

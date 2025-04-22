@@ -2,30 +2,37 @@
 session_start();
 require '../db_connection.php';
 
-$entriesPerPage = isset($_GET['entries']) ? intval($_GET['entries']) : 10;
-$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-$search = isset($_GET['search']) ? $_GET['search'] : "";
-$offset = ($page - 1) * $entriesPerPage;
-
-// Query to fetch case details
-$query = "SELECT cases.id, cases.client_id, cases.case_no, cases.case_type, cases.court_detail, 
-                 cases.respondent_name, cases.respondent_advocate, 
-                 cases.first_hearing_date, cases.case_stage,
-                 clients.name AS client_name
-          FROM cases 
-          LEFT JOIN clients ON cases.client_id = clients.id";
-
-if (!empty($search)) {
-    $search = "%$search%";
-    $query .= " WHERE cases.case_no LIKE ?";
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../../auth/login.php');
+    exit();
 }
 
-$query .= " LIMIT ? OFFSET ?";
+// Get pagination parameters
+$entriesPerPage = isset($_GET['entries']) ? intval($_GET['entries']) : 10;
+$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+$offset = ($page - 1) * $entriesPerPage;
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+
+// Base query - Now joining with clients table to get client names
+$query = "SELECT c.id, c.case_no, c.case_type, c.court_detail, c.first_hearing_date, c.case_stage, 
+         c.respondent_name, c.petitioner_name, c.client_id, c.client_role, cl.name as client_name 
+         FROM cases c 
+         LEFT JOIN clients cl ON c.client_id = cl.id";
+
+// Add search conditions if search term is provided
+if (!empty($search)) {
+    $search = "%$search%";
+    $query .= " WHERE c.case_no LIKE ? OR c.respondent_name LIKE ? OR c.petitioner_name LIKE ?";
+}
+
+// Add pagination
+$query .= " ORDER BY c.id DESC LIMIT ? OFFSET ?";
 
 $stmt = $conn->prepare($query);
 
 if (!empty($search)) {
-    $stmt->bind_param("sii", $search, $entriesPerPage, $offset);
+    $stmt->bind_param("sssii", $search, $search, $search, $entriesPerPage, $offset);
 } else {
     $stmt->bind_param("ii", $entriesPerPage, $offset);
 }
@@ -36,16 +43,49 @@ $result = $stmt->get_result();
 $output = "";
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
+        // Determine parties based on client role
+        $petitioner = '';
+        $respondent = '';
+        
+        if ($row['client_id']) {
+            if ($row['client_role'] === 'Petitioner') {
+                $petitioner = htmlspecialchars($row['client_name']);
+                $respondent = htmlspecialchars($row['respondent_name']);
+            } else {
+                $petitioner = htmlspecialchars($row['petitioner_name']);
+                $respondent = htmlspecialchars($row['client_name']);
+            }
+        } else {
+            // If no client is linked, use the stored names directly
+            $petitioner = htmlspecialchars($row['petitioner_name']);
+            $respondent = htmlspecialchars($row['respondent_name']);
+        }
+        
+        // Format parties display
+        $parties = $petitioner;
+        if ($petitioner && $respondent) {
+            $parties .= " vs " . $respondent;
+        } elseif ($respondent) {
+            $parties = $respondent;
+        }
+        
+        // Format the next date (first_hearing_date)
+        $nextDate = !empty($row['first_hearing_date']) ? date('d-m-Y', strtotime($row['first_hearing_date'])) : 'Not set';
+        
+        // Generate table row
         $output .= "<tr>
             <td>" . htmlspecialchars($row['case_no']) . "</td>
             <td>" . htmlspecialchars($row['case_type']) . "</td> 
             <td>" . htmlspecialchars($row['court_detail']) . "</td>
-            <td>" . htmlspecialchars($row['client_name']) . " vs " . htmlspecialchars($row['respondent_name']) . "</td>
-            <td>" . htmlspecialchars($row['first_hearing_date']) . "</td>
+            <td>" . $parties . "</td>
+            <td>" . $nextDate . "</td>
             <td>" . htmlspecialchars($row['case_stage']) . "</td>
             <td>
-                <a href='../staff/case_detail.php?case_id=" . $row['id'] . "' class='btn btn-sm btn-primary'>View Details</a>
-                <button class='btn btn-sm btn-danger'>Delete</button>
+                <a href='case_detail.php?case_id=" . $row['id'] . "' class='btn btn-sm btn-primary'>View Details</a>
+                <a href='case_edit.php?id=" . $row['id'] . "' class='btn btn-sm btn-warning'>Edit</a>
+                <a href='../includes/staff/delete_case.php?id=" . $row['id'] . "' 
+                   class='btn btn-sm btn-danger'
+                   onclick=\"return confirm('Are you sure you want to delete this case? This action cannot be undone.');\">Delete</a>
             </td>
         </tr>";
     }

@@ -1,25 +1,83 @@
+/* Timeline Styles */
 .timeline {
-    list-style: none;
-    padding: 0;
-    position: relative;
+  list-style: none;
+  padding: 0;
+  position: relative;
 }
 
 .timeline li {
-    position: relative;
-    padding-left: 20px;
-    margin-bottom: 15px;
-    border-left: 3px solid #007bff; /* Blue timeline line */
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 15px;
+  border-left: 3px solid #007bff; /* Blue timeline line */
 }
 
 .timeline-date {
-    font-size: 14px;
-    font-weight: bold;
-    color: #6c757d;
-    display: block;
+  font-size: 14px;
+  font-weight: bold;
+  color: #6c757d;
+  display: block;
 }
 
 .timeline-content {
-    background: #f8f9fa;
-    padding: 10px;
-    border-radius: 5px;
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+/* Full-height Layout Styles */
+html,
+body {
+  height: 100%;
+}
+
+.page-wrapper {
+  min-height: 100vh;
+}
+
+.body-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container-fluid {
+  flex: 1 0 auto; /* grow, don't shrink, and use auto sizing */
+}
+
+#main-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer {
+  margin-top: auto;
+}
+
+/* Alert improvements */
+.alert-dismissible {
+  position: relative;
+}
+
+.alert-dismissible .btn-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.75rem 1.25rem;
+}
+
+/* Table improvements */
+.table-action-buttons .btn {
+  margin: 0 2px;
+}
+
+/* Card enhancements */
+.card {
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Form styling enhancements */
+.form-label.text-primary {
+  font-weight: 500;
 }

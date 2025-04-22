@@ -15,6 +15,7 @@ if (!isset($_SESSION['user_id'])) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Nabihah Ishak & CO. - List of Clients</title>
   <link rel="stylesheet" href="../assets/css/dashboard.min.css" />
+  <link rel="stylesheet" href="../assets/css/others.css" />
 </head>
 
 <body>
@@ -160,6 +161,61 @@ if (!isset($_SESSION['user_id'])) {
             loadClients();
         });
     });
+    
+    // Client deletion confirmation
+    function confirmDelete(clientId, clientName) {
+        if (confirm(`Are you sure you want to delete client "${clientName}"?\n\nThis action cannot be undone and may affect associated cases.`)) {
+            // Submit form via AJAX
+            $.ajax({
+                url: "../includes/staff/delete_client.php",
+                type: "POST",
+                data: { client_id: clientId },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Show success message
+                        alert(response.message);
+                        // Reload client list
+                        $("#clientTableBody").load("../includes/staff/fetch_clients.php", {
+                            entries: $("#entriesPerPage").val(),
+                            page: 1,
+                            search: $("#searchField").val()
+                        });
+                    } else {
+                        // If client has cases, ask if they want to force delete
+                        if (response.message.includes("associated case")) {
+                            if (confirm(response.message + "\n\nDo you want to proceed anyway? This will remove the client association from these cases.")) {
+                                // If confirmed, resubmit with force_delete flag
+                                $.ajax({
+                                    url: "../includes/staff/delete_client.php",
+                                    type: "POST",
+                                    data: { client_id: clientId, force_delete: 'yes' },
+                                    dataType: 'json',
+                                    success: function(response) {
+                                        alert(response.message);
+                                        // Reload client list
+                                        $("#clientTableBody").load("../includes/staff/fetch_clients.php", {
+                                            entries: $("#entriesPerPage").val(),
+                                            page: 1,
+                                            search: $("#searchField").val()
+                                        });
+                                    },
+                                    error: function() {
+                                        alert("An error occurred during deletion.");
+                                    }
+                                });
+                            }
+                        } else {
+                            alert(response.message);
+                        }
+                    }
+                },
+                error: function() {
+                    alert("An error occurred during deletion.");
+                }
+            });
+        }
+    }
   </script>
 
 </body>
