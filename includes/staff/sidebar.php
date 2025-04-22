@@ -1,3 +1,9 @@
+<?php
+if (!isset($conn)) {
+    require_once __DIR__ . '/../db_connection.php';
+}
+
+?>
 <aside class="left-sidebar">
   <div>
     <div class="brand-logo d-flex align-items-center justify-content-between">
@@ -75,7 +81,6 @@
           </a>
         </li>
       </ul>
-      <!-- New Appointments Section -->
       <ul id="sidebarnav">
         <li class="nav-small-cap">
           <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
@@ -89,7 +94,57 @@
             <span class="hide-menu">My Appointments</span>
           </a>
         </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" href="set_appointment.php" aria-expanded="false">
+            <span>
+              <iconify-icon icon="solar:calendar-add-bold-duotone" class="fs-6"></iconify-icon>
+            </span>
+            <span class="hide-menu">Set Appointment</span>
+          </a>
+        </li>
       </ul>
+
+      <?php
+      $admin_query = "SELECT role FROM users WHERE id = ? AND role = 'staff'";
+      $admin_stmt = $conn->prepare($admin_query);
+      $admin_stmt->bind_param("i", $_SESSION['user_id']);
+      $admin_stmt->execute();
+      $admin_result = $admin_stmt->get_result();
+      $is_admin = ($admin_result->num_rows > 0);
+
+      if ($is_admin): 
+      ?>
+      <ul id="sidebarnav">
+        <li class="nav-small-cap">
+          <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+          <span class="hide-menu">Administration</span>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" href="manage_lawyers.php" aria-expanded="false">
+            <span>
+              <iconify-icon icon="solar:users-group-two-rounded-bold-duotone" class="fs-6"></iconify-icon>
+            </span>
+            <span class="hide-menu">Manage Lawyers</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" href="payment_invoices.php" aria-expanded="false">
+            <span>
+              <iconify-icon icon="solar:bill-list-bold-duotone" class="fs-6"></iconify-icon>
+            </span>
+            <span class="hide-menu">Payments & Invoices</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" href="system_settings.php" aria-expanded="false">
+            <span>
+              <iconify-icon icon="solar:settings-bold-duotone" class="fs-6"></iconify-icon>
+            </span>
+            <span class="hide-menu">System Settings</span>
+          </a>
+        </li>
+      </ul>
+      <?php endif; ?>
     </nav>
   </div>
 </aside>
