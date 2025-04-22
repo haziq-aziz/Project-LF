@@ -1,4 +1,4 @@
-/* Timeline Styles */
+/* Enhanced Timeline Styles */
 .timeline {
   list-style: none;
   padding: 0;
@@ -8,8 +8,12 @@
 .timeline li {
   position: relative;
   padding-left: 20px;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   border-left: 3px solid #007bff; /* Blue timeline line */
+}
+
+.timeline li:last-child {
+  margin-bottom: 0;
 }
 
 .timeline-date {
@@ -17,12 +21,44 @@
   font-weight: bold;
   color: #6c757d;
   display: block;
+  margin-bottom: 5px;
 }
 
 .timeline-content {
   background: #f8f9fa;
-  padding: 10px;
+  padding: 12px;
   border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.timeline-content strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #212529;
+}
+
+.timeline-content p {
+  margin-bottom: 8px;
+}
+
+.timeline-content small {
+  font-size: 12px;
+  display: block;
+  margin-top: 8px;
+}
+
+/* Add different colors for different timeline entries */
+.timeline li:nth-child(4n + 1) {
+  border-left-color: #007bff; /* Blue */
+}
+.timeline li:nth-child(4n + 2) {
+  border-left-color: #198754; /* Green */
+}
+.timeline li:nth-child(4n + 3) {
+  border-left-color: #dc3545; /* Red */
+}
+.timeline li:nth-child(4n + 4) {
+  border-left-color: #fd7e14; /* Orange */
 }
 
 /* Full-height Layout Styles */
