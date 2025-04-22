@@ -17,7 +17,7 @@
         <li class="sidebar-item">
           <a class="sidebar-link" href="dashboard.php" aria-expanded="false">
             <span>
-              <iconify-icon icon="solar:home-smile-bold-duotone" class="fs-6"></iconify-icon>
+              <iconify-icon icon="solar:home-2-bold-duotone" class="fs-6"></iconify-icon>
             </span>
             <span class="hide-menu">Dashboard</span>
           </a>
@@ -29,17 +29,25 @@
           <span class="hide-menu">Cases</span>
         </li>
         <li class="sidebar-item">
+          <a class="sidebar-link" href="case_assigned.php" aria-expanded="false">
+            <span>
+              <iconify-icon icon="solar:case-minimalistic-bold-duotone" class="fs-6"></iconify-icon>
+            </span>
+            <span class="hide-menu">My Cases</span>
+          </a>
+        </li>
+        <li class="sidebar-item">
           <a class="sidebar-link" href="case_view.php" aria-expanded="false">
             <span>
-              <iconify-icon icon="solar:home-smile-bold-duotone" class="fs-6"></iconify-icon>
+              <iconify-icon icon="solar:documents-bold-duotone" class="fs-6"></iconify-icon>
             </span>
-            <span class="hide-menu">View All Cases</span>
+            <span class="hide-menu">All Cases</span>
           </a>
         </li>
         <li class="sidebar-item">
           <a class="sidebar-link" href="case_add.php" aria-expanded="false">
             <span>
-              <iconify-icon icon="solar:home-smile-bold-duotone" class="fs-6"></iconify-icon>
+              <iconify-icon icon="solar:document-add-bold-duotone" class="fs-6"></iconify-icon>
             </span>
             <span class="hide-menu">Add New Case</span>
           </a>
@@ -53,7 +61,7 @@
         <li class="sidebar-item">
           <a class="sidebar-link" href="client_view.php" aria-expanded="false">
             <span>
-              <iconify-icon icon="solar:home-smile-bold-duotone" class="fs-6"></iconify-icon>
+              <iconify-icon icon="solar:users-group-rounded-bold-duotone" class="fs-6"></iconify-icon>
             </span>
             <span class="hide-menu">List of Client</span>
           </a>
@@ -61,25 +69,27 @@
         <li class="sidebar-item">
           <a class="sidebar-link" href="client_add.php" aria-expanded="false">
             <span>
-              <iconify-icon icon="solar:home-smile-bold-duotone" class="fs-6"></iconify-icon>
+              <iconify-icon icon="solar:user-plus-bold-duotone" class="fs-6"></iconify-icon>
             </span>
             <span class="hide-menu">Add Client</span>
           </a>
         </li>
       </ul>
-      
-      
-      <!-- <div class="unlimited-access hide-menu bg-primary-subtle position-relative mb-7 mt-7 rounded-3">
-        <div class="d-flex">
-          <div class="unlimited-access-title me-3">
-            <h6 class="fw-semibold fs-4 mb-6 text-dark w-75">Upgrade to pro</h6>
-            <a href="#" target="_blank" class="btn btn-primary fs-2 fw-semibold lh-sm">Buy Pro</a>
-          </div>
-          <div class="unlimited-access-img">
-            <img src="../assets/images/backgrounds/rocket.png" alt="" class="img-fluid">
-          </div>
-        </div>
-      </div> -->
+      <!-- New Appointments Section -->
+      <ul id="sidebarnav">
+        <li class="nav-small-cap">
+          <i class="ti ti-dots nav-small-cap-icon fs-6"></i>
+          <span class="hide-menu">Appointments</span>
+        </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" href="my_appointments.php" aria-expanded="false">
+            <span>
+              <iconify-icon icon="solar:calendar-mark-bold-duotone" class="fs-6"></iconify-icon>
+            </span>
+            <span class="hide-menu">My Appointments</span>
+          </a>
+        </li>
+      </ul>
     </nav>
   </div>
 </aside>
