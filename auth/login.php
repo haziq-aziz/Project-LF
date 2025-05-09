@@ -15,36 +15,46 @@ $error = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     require '../includes/db_connection.php';
 
-    $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
     $password = $_POST['password'];
 
-    // Check username sini
-    $stmt = $conn->prepare("SELECT id, username, password, role FROM users WHERE username = ?");
-    $stmt->bind_param("s", $username);
+    // Try staff (users table) first
+    $stmt = $conn->prepare("SELECT id, name, email, password, role FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
-
-        // Verify password sini
         if (password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
+            $_SESSION['username'] = $user['name'];
             $_SESSION['role'] = $user['role'];
-
-            // Redirect user ikut role
-            if ($user['role'] == 'staff') {
-                header('Location: ../staff/dashboard.php');
-            } else {
-                header('Location: ../client/dashboard.php');
-            }
+            header('Location: ../staff/dashboard.php');
             exit();
         } else {
-            $error = "Invalid username or password.";
+            $error = "Invalid credentials.";
         }
     } else {
-        $error = "Invalid username or password.";
+        // Try client (clients table)
+        $stmt = $conn->prepare("SELECT id, name, email, password FROM clients WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows === 1) {
+            $client = $result->fetch_assoc();
+            if (password_verify($password, $client['password'])) {
+                $_SESSION['user_id'] = $client['id'];
+                $_SESSION['username'] = $client['name'];
+                $_SESSION['role'] = 'client';
+                header('Location: ../client/dashboard.php');
+                exit();
+            } else {
+                $error = "Invalid credentials.";
+            }
+        } else {
+            $error = "Account not found.";
+        }
     }
 }
 ?>
@@ -77,13 +87,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 
                 <!-- Login error message sini -->
                 <?php if($error): ?>
-                    <p class="text-danger text-center"><?php $error ?></p>
+                    <p class="text-danger text-center"><?php echo htmlspecialchars($error); ?></p>
                 <?php endif; ?>
 
                 <form action="login.php" method="POST">
                   <div class="mb-3">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" class="form-control" id="username" name="username" required>
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
                   </div>
                   <div class="mb-4">
                     <label for="password" class="form-label">Password</label>

@@ -60,7 +60,7 @@ if ($result->num_rows > 0) {
             <td>" . $status . "</td>
             <td>
                 <a href='client_detail.php?id=" . $row['id'] . "' class='btn btn-sm btn-primary'>View</a>
-                <a href='edit_client.php?id=" . $row['id'] . "' class='btn btn-sm btn-warning'>Edit</a>
+                <a href='client_edit.php?id=" . $row['id'] . "' class='btn btn-sm btn-warning'>Edit</a>
                 <a href='javascript:void(0);' onclick='confirmDelete(" . $row['id'] . ", \"" . htmlspecialchars($row['name'], ENT_QUOTES) . "\")' 
                    class='btn btn-sm btn-danger'>Delete</a>
             </td>
