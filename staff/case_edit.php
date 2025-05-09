@@ -326,7 +326,7 @@ $lawyerResult = $conn->query($lawyerQuery);
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">‎</label>
-                                <a href="case_view.php" class="btn btn-outline-secondary m-1">Cancel</a>
+                                <a href="case_view.php" class="btn btn-outline-primary m-1">Cancel</a>
                                 <button type="submit" class="btn btn-primary m-1">Save Changes</button>
                             </div>
                         </div>

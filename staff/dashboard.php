@@ -288,7 +288,7 @@ function getAppointmentStatusBadge($status) {
 
                                             <!-- View More Button -->
                                             <div class="d-flex justify-content-center case-action">
-                                                <a href="case_details.php?id=<?= $case['id'] ?>" class="btn btn-outline-primary mt-3">View Case Details</a>
+                                                <a href="case_detail.php?case_id=<?= $case['id'] ?>" class="btn btn-outline-primary mt-3">View Case Details</a>
                                             </div>
                                         </div>
                                     </div>
@@ -416,7 +416,6 @@ function getAppointmentStatusBadge($status) {
   <script src="../assets/js/sidebarmenu.js"></script>
   <script src="../assets/js/app.min.js"></script>
   <script src="../assets/js/dashboard.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
 
   <script>
     $(document).ready(function() {

@@ -107,8 +107,8 @@ if ($result->num_rows > 0) {
             <td>" . $nextDate . "</td>
             <td>" . $status . "</td>
             <td>
-                <a href='case_detail.php?id=" . $row['id'] . "' class='btn btn-sm btn-primary'>View</a>
-                <a href='edit_case.php?id=" . $row['id'] . "' class='btn btn-sm btn-warning'>Edit</a>
+                <a href='case_detail.php?case_id=" . $row['id'] . "' class='btn btn-sm btn-primary'>View</a>
+                <a href='case_edit.php?id=" . $row['id'] . "' class='btn btn-sm btn-warning'>Edit</a>
             </td>
         </tr>";
     }

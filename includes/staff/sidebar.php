@@ -1,9 +1,19 @@
+
+<script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+
 <?php
 if (!isset($conn)) {
     require_once __DIR__ . '/../db_connection.php';
 }
 
 ?>
+<style>
+.left-sidebar, .left-sidebar .scroll-sidebar {
+  max-height: 100vh !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+}
+</style>
 <aside class="left-sidebar">
   <div>
     <div class="brand-logo d-flex align-items-center justify-content-between">

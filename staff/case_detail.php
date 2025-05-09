@@ -40,7 +40,7 @@ if (!isset($_SESSION['user_id'])) {
       <div class="container-fluid">
         <div class="row">
           <div class="col-lg-4">
-            <a href="edit_case.php?id=<?= $case['id']; ?>" class="btn btn-sm btn-primary p-2 mb-2">
+            <a href="case_edit.php?id=<?= $case['id']; ?>" class="btn btn-sm btn-primary p-2 mb-2">
               <i class="fa fa-edit me-2"></i>
               Edit Case
             </a>
@@ -398,7 +398,6 @@ if (!isset($_SESSION['user_id'])) {
   <script src="../assets/js/sidebarmenu.js"></script>
   <script src="../assets/js/app.min.js"></script>
   <script src="../assets/js/dashboard.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
   <script>
   // Edit progress function - populate the edit modal with existing data
   function editProgress(id, title, description, date) {
