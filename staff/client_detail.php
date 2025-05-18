@@ -49,6 +49,19 @@ $stmt->bind_param("i", $client_id);
 $stmt->execute();
 $invoices = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
+
+// Fetch appointments related to this client
+$appointmentQuery = "SELECT a.*, u.name as staff_name, c.case_no 
+                    FROM appointments a 
+                    LEFT JOIN users u ON a.staff_id = u.id 
+                    LEFT JOIN cases c ON a.case_id = c.id 
+                    WHERE a.client_id = ? 
+                    ORDER BY a.appointment_date DESC, a.appointment_time DESC";
+$stmt = $conn->prepare($appointmentQuery);
+$stmt->bind_param("i", $client_id);
+$stmt->execute();
+$appointments = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
 ?>
 <!doctype html>
 <html lang="en">
@@ -111,8 +124,7 @@ $stmt->close();
                               <h6 class="fw-semibold mb-1">Phone Number</h6>
                               <p><?= htmlspecialchars($client['phone']) ?></p>
                             </div>
-                          </div>
-                          <div class="col-md-6">
+                          </div>                          <div class="col-md-6">
                             <div class="mb-3">
                               <h6 class="fw-semibold mb-1">Country</h6>
                               <p><?= htmlspecialchars($client['country'] ?? 'Not specified') ?></p>
@@ -137,19 +149,83 @@ $stmt->close();
                   <div class="col-md-4">
                     <div class="card mb-4">
                       <div class="card-body">
-                        <h6 class="fw-semibold mb-3">Quick Actions</h6>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                          <h6 class="fw-semibold mb-0">Client Actions</h6>
+                        </div>
                         <div class="d-grid gap-2">
-                          <a href="case_add.php?client_id=<?= $client['id'] ?>" class="btn btn-primary">
-                            <i class="fas fa-folder-plus me-1"></i> Create New Case
+                          <a href="case_add.php?client_id=<?= $client['id'] ?>" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-folder-plus me-1"></i> New Case
                           </a>
-                          <a href="create_invoice.php?client_id=<?= $client['id'] ?>" class="btn btn-success">
-                            <i class="fas fa-file-invoice-dollar me-1"></i> Create Invoice
+                          <a href="create_invoice.php?client_id=<?= $client['id'] ?>" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-file-invoice-dollar me-1"></i> New Invoice
                           </a>
-                          <a href="set_appointment.php?client_id=<?= $client['id'] ?>" class="btn btn-info text-white">
+                          <a href="set_appointment.php?client_id=<?= $client['id'] ?>" class="btn btn-outline-info btn-sm">
                             <i class="fas fa-calendar-plus me-1"></i> Schedule Appointment
                           </a>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Client Appointments Section -->
+                <div class="card mb-4">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h5 class="card-title fw-semibold mb-0">Appointments</h5>
+                      <a href="set_appointment.php?client_id=<?= $client['id'] ?>" class="btn btn-sm btn-primary">
+                        <i class="fas fa-calendar-plus me-1"></i> New Appointment
+                      </a>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table table-bordered table-striped">
+                        <thead class="table-light">
+                          <tr>
+                            <th>Title</th>
+                            <th>Date & Time</th>
+                            <th>Staff</th>
+                            <th>Case</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <?php if (empty($appointments)): ?>
+                          <tr>
+                            <td colspan="6" class="text-center">No appointments found for this client.</td>
+                          </tr>
+                          <?php else: foreach ($appointments as $appointment): ?>
+                          <tr>
+                            <td><?= htmlspecialchars($appointment['title'] ?? 'N/A') ?></td>
+                            <td>
+                              <?php if (!empty($appointment['appointment_date'])): ?>
+                                <?= date('d M Y', strtotime($appointment['appointment_date'])) ?><br>
+                                <span class="text-muted">
+                                  <?= !empty($appointment['appointment_time']) ? date('h:i A', strtotime($appointment['appointment_time'])) : 'N/A' ?>
+                                  <?= !empty($appointment['duration']) ? '(' . $appointment['duration'] . ' mins)' : '' ?>
+                                </span>
+                              <?php else: ?>
+                                Not set
+                              <?php endif; ?>
+                            </td>
+                            <td><?= htmlspecialchars($appointment['staff_name'] ?? 'Not assigned') ?></td>
+                            <td><?= !empty($appointment['case_no']) ? htmlspecialchars($appointment['case_no']) : 'Not related to case' ?></td>
+                            <td>
+                              <span class="badge <?= 
+                                ($appointment['status'] == 'Completed') ? 'bg-success' : 
+                                (($appointment['status'] == 'Cancelled') ? 'bg-danger' : 'bg-info') ?>">
+                                <?= htmlspecialchars($appointment['status'] ?? 'Unknown') ?>
+                              </span>
+                            </td>
+                            <td>
+                              <button type="button" class="btn btn-sm btn-primary view-appointment" data-id="<?= $appointment['id'] ?>">
+                                <i class="fas fa-eye"></i> View
+                              </button>
+                            </td>
+                          </tr>
+                          <?php endforeach; endif; ?>
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
@@ -252,6 +328,23 @@ $stmt->close();
               </div>
             </div>
           </div>
+        </div>      </div>
+      
+      <!-- Modal for Viewing Appointment Details -->
+      <div class="modal fade" id="viewAppointmentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Appointment Details</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="appointmentDetailsBody">
+              <!-- Appointment details will be loaded here via AJAX -->
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -264,6 +357,27 @@ $stmt->close();
   <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../assets/js/sidebarmenu.js"></script>
   <script src="../assets/js/app.min.js"></script>
+  
+  <script>
+    $(document).ready(function() {
+      // View appointment details
+      $(document).on('click', '.view-appointment', function() {
+        const appointmentId = $(this).data('id');
+        $.ajax({
+          url: "../includes/staff/get_appointment_details.php",
+          type: "GET",
+          data: { id: appointmentId },
+          success: function(data) {
+            $("#appointmentDetailsBody").html(data);
+            $("#viewAppointmentModal").modal('show');
+          },
+          error: function() {
+            $("#appointmentDetailsBody").html('<p class="text-danger">Error loading appointment details</p>');
+          }
+        });
+      });
+    });
+  </script>
 </body>
 
 </html>
