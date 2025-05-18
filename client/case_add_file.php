@@ -1,6 +1,7 @@
 <?php 
 session_start();
 require '../includes/db_connection.php';
+require '../includes/notifications_helper.php'; // Add notification helper
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -94,8 +95,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("INSERT INTO case_files (case_id, file_name, file_category, file_path, file_description, original_filename, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
             $original_filename = $_FILES['case_file']['name'];
             $stmt->bind_param("isssss", $case_id, $file_name, $file_category, $unique_filename, $file_description, $original_filename);
-            
-            if ($stmt->execute()) {
+              if ($stmt->execute()) {
+                // Get case information to find which staff members to notify
+                $case_query = "SELECT c.case_type, c.lawyer_id, u.name as lawyer_name 
+                              FROM cases c 
+                              LEFT JOIN users u ON c.lawyer_id = u.id 
+                              WHERE c.id = ?";
+                $case_stmt = $conn->prepare($case_query);
+                $case_stmt->bind_param("i", $case_id);
+                $case_stmt->execute();
+                $case_info = $case_stmt->get_result()->fetch_assoc();
+                
+                // If case has an assigned lawyer, notify them about the uploaded file
+                if ($case_info && $case_info['lawyer_id']) {
+                    $client_id = $_SESSION['user_id'];
+                    $client_query = "SELECT name FROM clients WHERE id = ?";
+                    $client_stmt = $conn->prepare($client_query);
+                    $client_stmt->bind_param("i", $client_id);
+                    $client_stmt->execute();
+                    $client_result = $client_stmt->get_result();
+                    $client_data = $client_result->fetch_assoc();
+                    $client_name = $client_data ? $client_data['name'] : 'Client';
+                      // Create notification for the lawyer
+                    $title = "New Document Uploaded";
+                    $message = "Client {$client_name} has uploaded a new document '{$original_filename}' to case '{$case_info['case_type']}'.";
+                    $link = "/staff/case_detail.php?case_no={$case['case_no']}";
+                    
+                    $notification_result = add_notification($case_info['lawyer_id'], 'staff', $title, $message, $link);
+                    
+                    if (!$notification_result && isset($_SESSION['notification_error'])) {
+                        // Just log the error, don't show to client
+                        error_log("Notification error: " . $_SESSION['notification_error']);
+                        unset($_SESSION['notification_error']);
+                    }
+                    
+                    if (isset($client_stmt)) {
+                        $client_stmt->close();
+                    }
+                }
+                
+                if (isset($case_stmt)) {
+                    $case_stmt->close();
+                }
+                
                 $_SESSION['success'] = "File uploaded successfully";
                 header("Location: case_detail.php?case_no=" . urlencode($case['case_no']));
                 exit();

@@ -1,6 +1,7 @@
 <?php 
 session_start();
 require '../includes/db_connection.php';
+require '../includes/notifications_helper.php'; // Add notification helper
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -94,9 +95,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("INSERT INTO case_files (case_id, file_name, file_category, file_path, file_description, original_filename, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
             $original_filename = $_FILES['case_file']['name'];
             $stmt->bind_param("isssss", $case_id, $file_name, $file_category, $unique_filename, $file_description, $original_filename);
-            
-            if ($stmt->execute()) {
-                $_SESSION['success'] = "File uploaded successfully";
+              if ($stmt->execute()) {
+                // Get case and client information for notification
+                $case_query = "SELECT c.case_type, c.client_id, cl.name 
+                              FROM cases c 
+                              LEFT JOIN clients cl ON c.client_id = cl.id 
+                              WHERE c.id = ?";
+                $case_stmt = $conn->prepare($case_query);
+                $case_stmt->bind_param("i", $case_id);                $case_stmt->execute();
+                $case_info = $case_stmt->get_result()->fetch_assoc();
+                
+                // If client exists, send notification about uploaded file
+                if ($case_info && $case_info['client_id']) {
+                    // Fetch the case_no from the cases table
+                    $case_no_query = "SELECT case_no FROM cases WHERE id = ?";
+                    $case_no_stmt = $conn->prepare($case_no_query);
+                    $case_no_stmt->bind_param("i", $case_id);
+                    $case_no_stmt->execute();
+                    $case_no_result = $case_no_stmt->get_result();
+                      if ($case_no_result && $case_no_data = $case_no_result->fetch_assoc()) {
+                        $notification_result = notify_client_file_upload(
+                            $case_info['client_id'],
+                            $case_no_data['case_no'],
+                            $case_info['case_type'],
+                            $original_filename
+                        );
+                          // Debug the notification
+                        if (!$notification_result) {
+                            $_SESSION['debug'] = "Notification failed: Client ID: " . $case_info['client_id'] . 
+                                                ", Case #: " . $case_no_data['case_no'] . 
+                                                ", Type: " . $case_info['case_type'];
+                                                
+                            // Add SQL error if available
+                            if (isset($_SESSION['notification_error'])) {
+                                $_SESSION['debug'] .= " | Error: " . $_SESSION['notification_error'];
+                                unset($_SESSION['notification_error']);
+                            }
+                        } else {
+                            $_SESSION['debug'] = "Notification sent successfully!";
+                        }
+                    }
+                    
+                    if (isset($case_no_stmt)) {
+                        $case_no_stmt->close();
+                    }
+                }
+                  $_SESSION['success'] = "File uploaded successfully";
+                
+                // Add debug info to success message if available
+                if (isset($_SESSION['debug'])) {
+                    $_SESSION['success'] .= " | " . $_SESSION['debug'];
+                    unset($_SESSION['debug']);
+                }
+                
                 header("Location: case_detail.php?case_id=$case_id");
                 exit();
             } else {

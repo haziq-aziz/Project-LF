@@ -190,5 +190,30 @@ if (isset($_SESSION['profile_form_data']) && is_array($_SESSION['profile_form_da
   <script src="../assets/js/app.min.js"></script>
   <script src="../assets/libs/apexcharts/dist/apexcharts.min.js"></script>
   <script src="../assets/libs/simplebar/dist/simplebar.js"></script>
+  
+  <script>
+  // Dynamic profile picture preview
+  document.getElementById('profile_picture').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+      // Check if file is an image
+      if (!file.type.match('image.*')) {
+        alert('Please select an image file');
+        return;
+      }
+      
+      // Create URL for the selected file
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        // Update the profile image preview
+        const profileImage = document.querySelector('.col-md-4 img.rounded-circle');
+        if (profileImage) {
+          profileImage.src = e.target.result;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+  </script>
 </body>
 </html>

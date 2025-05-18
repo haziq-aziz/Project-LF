@@ -1,6 +1,7 @@
 <?php 
 session_start();
 require '../includes/db_connection.php';
+require '../includes/notifications_helper.php'; // Add notification helper
 
 if (!isset($_SESSION['user_id'])) {
   header('Location: ../../auth/login.php');
@@ -55,8 +56,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $stmt->bind_param("ssssisiissi", $title, $description, $appointment_date, $appointment_time, 
                          $duration, $location, $client_id, $case_id, $staff_id, $status, $created_by);
-        
-        if ($stmt->execute()) {
+          if ($stmt->execute()) {
+            $appointment_id = $stmt->insert_id;
+            
+            // If client is selected, notify them about the appointment
+            if ($client_id) {
+                // Get formatted date for better readability
+                $formatted_date = date('F j, Y', strtotime($appointment_date)) . ' at ' . date('g:i A', strtotime($appointment_time));
+                
+                // Send notification to client                $title = "New Appointment Scheduled";
+                $message = "An appointment has been scheduled for you on {$formatted_date}";
+                $link = "/client/dashboard.php"; // Link to client dashboard
+                add_notification($client_id, 'client', $title, $message, $link);
+            }
+            
+            // If staff member is different from current user, notify them
+            if ($staff_id && $staff_id != $user_id) {
+                // Get client name
+                $client_name = "Unknown";
+                if ($client_id) {
+                    $client_query = "SELECT name FROM clients WHERE id = ?";
+                    $client_stmt = $conn->prepare($client_query);
+                    $client_stmt->bind_param('i', $client_id);
+                    $client_stmt->execute();
+                    $client_result = $client_stmt->get_result();
+                    if ($client_data = $client_result->fetch_assoc()) {
+                        $client_name = $client_data['name'];
+                    }
+                    $client_stmt->close();
+                }
+                
+                // Notify staff member about the appointment
+                notify_staff_new_appointment($staff_id, $appointment_id, $client_name, date('F j, Y', strtotime($appointment_date)));
+            }
+            
             $_SESSION['success'] = "Appointment scheduled successfully";
             header("Location: my_appointments.php");
             exit();

@@ -1,6 +1,7 @@
 <?php 
 session_start();
 require '../includes/db_connection.php';
+require_once('../includes/notifications_helper.php'); // Add notification helper
 
 if (!isset($_SESSION['user_id'])) {
   header('Location: ../../auth/login.php');
@@ -120,9 +121,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           }
         }
       }
-      
-      // Commit transaction
+        // Commit transaction
       $conn->commit();
+      
+      // Send notification to client about the new invoice
+      notify_client_new_invoice($client_id, $invoice_id, $total_amount);
       
       $_SESSION['success'] = "Invoice created successfully";
       header("Location: payment_invoices.php");

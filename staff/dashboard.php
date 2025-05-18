@@ -35,7 +35,6 @@ if ($latest_cases_result && $latest_cases_result->num_rows > 0) {
   }
 }
 
-// Add this after your existing case query code
 
 // Fetch upcoming appointments for the current user
 $appointments_query = "SELECT a.id, a.title, a.description, a.appointment_date, a.appointment_time, 
@@ -124,35 +123,35 @@ function getAppointmentStatusBadge($status) {
   <link rel="stylesheet" href="../assets/css/dashboard.min.css" />
   <link rel="stylesheet" href="../assets/css/others.css" />
   <style>
-    /* Add this to the head section of your dashboard.php file */
+    
     .case-card {
-      height: 100%; /* Make cards fill their container height */
+      height: 100%;
       display: flex;
       flex-direction: column;
     }
     
     .case-card .card-body {
-      flex-grow: 1; /* Allow card body to grow and fill available space */
+      flex-grow: 1;
       display: flex;
       flex-direction: column;
     }
     
     .case-description {
-      flex-grow: 1; /* Allow description to take available space */
-      min-height: 80px; /* Minimum height for description */
+      flex-grow: 1; 
+      min-height: 80px;
       overflow: hidden;
     }
     
     .case-details {
-      margin-top: auto; /* Push details to bottom */
+      margin-top: auto;
     }
     
     .case-action {
-      margin-top: 1rem; /* Consistent spacing for action button */
+      margin-top: 1rem; 
     }
     
     .img-container {
-      height: 150px; /* Fixed height for image container */
+      height: 150px; 
       overflow: hidden;
     }
   </style>
@@ -357,9 +356,9 @@ function getAppointmentStatusBadge($status) {
                                             </td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
-                                                    <a href="view_appointment.php?id=<?= $appointment['id'] ?>" class="btn btn-outline-primary">
+                                                    <button type="button" class="btn btn-outline-primary view-appointment" data-id="<?= $appointment['id'] ?>">
                                                         <i class="fa fa-eye"></i>
-                                                    </a>
+                                                    </button>
                                                     
                                                     <?php if ($appointment['status'] !== 'Completed' && $appointment['status'] !== 'Cancelled'): ?>
                                                         <a href="edit_appointment.php?id=<?= $appointment['id'] ?>" class="btn btn-outline-secondary">
@@ -395,7 +394,7 @@ function getAppointmentStatusBadge($status) {
                     
                     <?php if (count($upcoming_appointments) > 0): ?>
                         <div class="text-end mt-3">
-                            <a href="appointments.php" class="btn btn-outline-primary">View All Appointments</a>
+                            <a href="my_appointments.php" class="btn btn-outline-primary">View All Appointments</a>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -462,7 +461,44 @@ function getAppointmentStatusBadge($status) {
         });
       }
     }
+
+    $(document).ready(function() {
+    // View appointment details
+    $(document).on('click', '.view-appointment', function() {
+      const appointmentId = $(this).data('id');
+      $.ajax({
+        url: "../includes/staff/get_appointment_details.php",
+        type: "GET",
+        data: { id: appointmentId },
+        success: function(data) {
+          $("#appointmentDetailsBody").html(data);
+          $("#viewAppointmentModal").modal('show');
+        },
+        error: function() {
+          $("#appointmentDetailsBody").html('<p class="text-danger">Error loading appointment details</p>');
+        }
+      });
+    });
+  });
   </script>
+
+  <!-- Modal for Viewing Appointment Details -->
+<div class="modal fade" id="viewAppointmentModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Appointment Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="appointmentDetailsBody">
+        <!-- Appointment details will be loaded here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 
 </html>

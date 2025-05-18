@@ -1,6 +1,7 @@
 <?php
 session_start();
 require '../db_connection.php';
+require '../notifications_helper.php'; // Add notification helper
 
 header('Content-Type: application/json');
 
@@ -57,6 +58,24 @@ $update_stmt = $conn->prepare($update_query);
 $update_stmt->bind_param("si", $status, $appointment_id);
 
 if ($update_stmt->execute()) {
+    // Get appointment details to send notification
+    $fetch_query = "SELECT a.appointment_date, a.client_id, c.name as client_name 
+                    FROM appointments a 
+                    LEFT JOIN clients c ON a.client_id = c.id 
+                    WHERE a.id = ?";
+    $fetch_stmt = $conn->prepare($fetch_query);
+    $fetch_stmt->bind_param("i", $appointment_id);
+    $fetch_stmt->execute();
+    $result = $fetch_stmt->get_result();
+    
+    if ($row = $result->fetch_assoc()) {
+        // If there's a client associated with this appointment, notify them
+        if ($row['client_id']) {
+            $formatted_date = date('F j, Y', strtotime($row['appointment_date']));
+            notify_client_appointment_update($row['client_id'], $appointment_id, $status, $formatted_date);
+        }
+    }
+    
     echo json_encode(['success' => true, 'message' => 'Appointment status updated successfully']);
 } else {
     echo json_encode(['success' => false, 'message' => 'Database error: ' . $conn->error]);

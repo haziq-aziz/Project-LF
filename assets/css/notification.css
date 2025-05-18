@@ -1,0 +1,60 @@
+/* Notification CSS styles */
+
+/* Notification indicator dot */
+.notification {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  height: 8px;
+  width: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Notification dropdown positioning */
+.notification-dropdown {
+  position: relative;
+}
+
+/* Ensure notification dropdown is above sidebar and positioned correctly */
+.dropdown-menu[aria-labelledby="notificationDropdown"] {
+  position: absolute;
+  z-index: 1050; /* Higher than sidebar z-index */
+  min-width: 320px;
+  max-width: 360px;
+  left: 0 !important;
+  right: auto !important;
+  transform: none !important;
+}
+
+/* Style for unread notifications */
+.notification-unread {
+  background-color: rgba(13, 110, 253, 0.05);
+  font-weight: 500;
+}
+
+/* Notification message styling */
+.notification-message {
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 3em;
+  line-height: 1.5em;
+}
+
+/* Notification time styling */
+.notification-time {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+/* Notification item hover effect */
+.dropdown-item:hover .notification-message {
+  color: #212529;
+}
+
+/* Bell icon positioning */
+.bell-icon-container {
+  position: relative;
+  display: inline-block;
+}

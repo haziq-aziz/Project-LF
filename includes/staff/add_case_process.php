@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../db_connection.php';
+require_once('../notifications_helper.php'); // Add notifications helper
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../../auth/login.php');
@@ -79,10 +80,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $caseNoReport, $caseType, $filingDate, $registerDate, $description, $caseStage, 
             $fileCategory, $firstHearingDate, $casePriority, $courtDetail, $courtType, 
             $court, $judgeName, $remarks, $lawyer_id
-        );
-
-        // Execute and handle result
+        );        // Execute and handle result
         if (mysqli_stmt_execute($stmt)) {
+            // Get the created case ID
+            $new_case_id = mysqli_insert_id($conn);
+            
+            // Fetch client name for notification
+            $client_query = "SELECT name FROM clients WHERE id = ?";
+            $client_stmt = mysqli_prepare($conn, $client_query);
+            mysqli_stmt_bind_param($client_stmt, "i", $client_id);
+            mysqli_stmt_execute($client_stmt);
+            $client_result = mysqli_stmt_get_result($client_stmt);
+            $client_data = mysqli_fetch_assoc($client_result);            mysqli_stmt_close($client_stmt);
+            
+            // Create notification for client
+            notify_client_new_case($client_id, $caseNo, $caseType);
+                // Notify assigned lawyer about the new case
+            if ($lawyer_id != $_SESSION['user_id']) {
+                $title = "New Case Assigned";
+                $message = "A new {$caseType} case has been assigned to you for client " . $client_data['name'];
+                $link = "/staff/case_detail.php?case_no={$caseNo}";
+                add_notification($lawyer_id, 'staff', $title, $message, $link);
+            }
+            
             $_SESSION['success'] = "Case has been successfully added.";
             header('Location: ../../staff/case_view.php');
             exit();
