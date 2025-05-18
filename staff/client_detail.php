@@ -261,15 +261,14 @@ $stmt->close();
                                                  (($case['case_stage'] == 'Case Ongoing') ? 'bg-warning' : 'bg-success') ?>">
                                 <?= htmlspecialchars($case['case_stage']) ?>
                               </span>
-                            </td>
-                            <td>
+                            </td>                            <td>
                               <span class="badge <?= ($case['case_priority'] == 'High') ? 'bg-danger' : 
                                                  (($case['case_priority'] == 'Medium') ? 'bg-warning' : 'bg-success') ?>">
                                 <?= htmlspecialchars($case['case_priority']) ?>
                               </span>
                             </td>
                             <td>
-                              <a href="case_detail.php?case_no=<?= $case['case_no'] ?>" class="btn btn-sm btn-primary">
+                              <a href="case_detail.php?case_id=<?= $case['id'] ?>" class="btn btn-sm btn-primary">
                                 <i class="fas fa-eye"></i> View
                               </a>
                             </td>

@@ -66,7 +66,12 @@ $lawyerResult = $conn->query($lawyerQuery);
                 <!-- Client Details -->
                 <div class="card">
                     <div class="card-body">
-                        <legend>Client Details</legend>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="card-title fw-semibold">Client Details</h5>
+                            <a href="set_appointment.php?client_id=18" class="btn btn-sm btn-primary">
+                                 + New Client
+                            </a>
+                        </div>
                         <div class="row">
                             <!-- Left Column - Client Selection -->
                             <div class="col-md-6">
@@ -119,7 +124,7 @@ $lawyerResult = $conn->query($lawyerQuery);
                 <!-- Case Details -->
                 <div class="card">
                     <div class="card-body">
-                        <legend>Case Details</legend>
+                        <h5 class="card-title fw-semibold mb-4">Case Details</h5>
                         <div class="row">
                             <!-- Left Column -->
                             <div class="col-md-4">
@@ -210,7 +215,7 @@ $lawyerResult = $conn->query($lawyerQuery);
                     <!-- Court Detail -->
                     <div class="card">
                         <div class="card-body">
-                            <legend>Court Detail</legend>
+                            <h5 class="card-title fw-semibold mb-4">Court Details</h5>
                             <div class="row">
                                 <!-- Left Column -->
                                 <div class="col-md-4">
@@ -253,7 +258,12 @@ $lawyerResult = $conn->query($lawyerQuery);
                     <!-- Task Assign -->
                     <div class="card">
                         <div class="card-body">
-                            <legend>Task Assign</legend>
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="card-title fw-semibold">Task Assign</h5>
+                                <a href="set_appointment.php?client_id=18" class="btn btn-sm btn-primary">
+                                    + New Lawyer
+                                </a>
+                            </div>
                             <div class="row">
                                  <div class="col-md-6">
                                     <label for="lawyer" class="form-label text-primary">Assign Case to Lawyer</label>
