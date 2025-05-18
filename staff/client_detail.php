@@ -40,7 +40,10 @@ $cases = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
 // Fetch invoices related to this client
-$invoiceQuery = "SELECT * FROM invoices WHERE client_id = ? ORDER BY created_at DESC";
+$invoiceQuery = "SELECT id, invoice_number, notes, total_amount, amount, tax_amount, discount_amount, status, due_date, issue_date, created_at 
+                FROM invoices 
+                WHERE client_id = ? 
+                ORDER BY created_at DESC";
 $stmt = $conn->prepare($invoiceQuery);
 $stmt->bind_param("i", $client_id);
 $stmt->execute();
@@ -207,11 +210,10 @@ $stmt->close();
                   <div class="card-body">
                     <h5 class="card-title fw-semibold mb-3">Invoices</h5>
                     <div class="table-responsive">
-                      <table class="table table-bordered table-striped">
-                        <thead class="table-light">
+                      <table class="table table-bordered table-striped">                        <thead class="table-light">
                           <tr>
                             <th>Invoice #</th>
-                            <th>Date</th>
+                            <th>Description</th>
                             <th>Due Date</th>
                             <th>Amount</th>
                             <th>Status</th>
@@ -225,14 +227,14 @@ $stmt->close();
                           </tr>
                           <?php else: foreach ($invoices as $invoice): ?>
                           <tr>
-                            <td><?= htmlspecialchars($invoice['invoice_number']) ?></td>
-                            <td><?= htmlspecialchars($invoice['invoice_date']) ?></td>
-                            <td><?= htmlspecialchars($invoice['due_date']) ?></td>
-                            <td>RM <?= number_format($invoice['total_amount'], 2) ?></td>
+                            <td><?= htmlspecialchars($invoice['invoice_number'] ?? 'N/A') ?></td>
+                            <td><?= htmlspecialchars($invoice['notes'] ?? 'No description') ?></td>
+                            <td><?= htmlspecialchars($invoice['due_date'] ?? 'Not set') ?></td>
+                            <td>RM <?= number_format($invoice['total_amount'] ?? 0, 2) ?></td>
                             <td>
                               <span class="badge <?= ($invoice['status'] == 'Paid') ? 'bg-success' : 
-                                                 (($invoice['status'] == 'Pending') ? 'bg-warning' : 'bg-danger') ?>">
-                                <?= htmlspecialchars($invoice['status']) ?>
+                                                 (($invoice['status'] == 'Pending' || $invoice['status'] == 'pending') ? 'bg-warning' : 'bg-danger') ?>">
+                                <?= htmlspecialchars($invoice['status'] ?? 'Unknown') ?>
                               </span>
                             </td>
                             <td>
